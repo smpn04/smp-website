@@ -1,0 +1,44 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Teacher {
+  id        Int      @id @default(autoincrement())
+  name      String
+  position  String
+  photo     String
+  createdAt DateTime @default(now())
+}
+
+model News {
+  id        Int    @id @default(autoincrement())
+  title     String
+  date      String
+  image     String
+
+  excerpt   String @db.Text
+  content   String @db.LongText
+}
+
+model Gallery {
+  id        Int      @id @default(autoincrement())
+  title     String
+  image     String
+  createdAt DateTime @default(now())
+}
+
+model PPDB {
+  id       Int    @id @default(autoincrement())
+  nama     String
+  nisn     String
+  ttl      String
+  jk       String
+  alamat   String
+  orangTua String
+  noHp     String
+}
