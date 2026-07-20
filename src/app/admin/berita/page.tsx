@@ -1,12 +1,20 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminBeritaPage() {
-  const news = await prisma.news.findMany({
-    orderBy: {
-      id: "desc",
-    },
-  });
+  let news: any[] = [];
+
+  try {
+    news = await prisma.news.findMany({
+      orderBy: {
+        id: "desc",
+      },
+    });
+  } catch (error) {
+    console.error("Database belum tersedia:", error);
+  }
 
   return (
     <>
