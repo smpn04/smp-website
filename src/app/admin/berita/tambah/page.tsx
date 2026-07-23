@@ -1,81 +1,169 @@
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
-import Link from "next/link";
-import Image from "next/image";
-import { prisma } from "@/lib/prisma";
+"use client";
 
-export default async function BeritaPage() {
-  const news = await prisma.news.findMany({
-    orderBy: {
-      id: "desc",
-    },
-  });
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+
+export default function TambahBeritaPage() {
+  const router = useRouter();
+
+  const [title, setTitle] = useState("");
+  const [date, setDate] = useState("");
+  const [image, setImage] = useState("");
+  const [excerpt, setExcerpt] = useState("");
+  const [content, setContent] = useState("");
+  const [uploading, setUploading] = useState(false);
+
+  async function simpanBerita(e: React.FormEvent) {
+    e.preventDefault();
+
+    try {
+      const res = await fetch("/api/admin/berita", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title,
+          date,
+          image,
+          excerpt,
+          content,
+        }),
+      });
+
+      const hasil = await res.json();
+
+      if (!res.ok || !hasil.success) {
+        alert(hasil.message || "Gagal menyimpan berita");
+        return;
+      }
+
+      alert("Berita berhasil disimpan");
+
+      router.push("/admin/berita");
+      router.refresh();
+    } catch (error) {
+      console.error(error);
+      alert("Terjadi kesalahan saat menyimpan berita.");
+    }
+  }
 
   return (
-    <>
-      <Header />
+    <main className="mx-auto max-w-3xl p-8">
+      <h1 className="mb-8 text-3xl font-bold">
+        Tambah Berita
+      </h1>
 
-      <section className="bg-blue-900 py-16 text-white">
-        <div className="mx-auto max-w-7xl px-6">
-          <h1 className="text-5xl font-bold">
-            Berita Sekolah
-          </h1>
+      <form onSubmit={simpanBerita} className="space-y-5">
 
-          <p className="mt-4 text-lg text-blue-100">
-            Informasi dan kegiatan terbaru UPT SMP Negeri 4 Duampanua.
-          </p>
-        </div>
-      </section>
+        <input
+          type="text"
+          placeholder="Judul Berita"
+          className="w-full rounded border p-3"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          required
+        />
 
-      <section className="mx-auto max-w-7xl px-6 py-16">
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+        <input
+          type="date"
+          className="w-full rounded border p-3"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          required
+        />
 
-          {news.map((item) => (
+        <div className="space-y-2">
 
-            <div
-              key={item.id}
-              className="overflow-hidden rounded-xl border bg-white shadow-md"
-            >
+          <input
+            type="file"
+            accept="image/*"
+            className="w-full rounded border p-3"
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
 
-              <Image
-                src={item.image}
-                alt={item.title}
-                width={600}
-                height={400}
-                className="h-56 w-full object-cover"
-              />
+              if (!file) return;
 
-              <div className="p-6">
+              setUploading(true);
 
-                <h2 className="text-2xl font-bold">
-                  {item.title}
-                </h2>
+              const formData = new FormData();
+              formData.append("file", file);
 
-                <p className="mt-2 text-sm text-gray-500">
-                  {item.date}
-                </p>
+              const res = await fetch("/api/upload", {
+                method: "POST",
+                body: formData,
+              });
 
-                <p className="mt-4 text-gray-600">
-                  {item.excerpt}
-                </p>
+              const hasil = await res.json();
 
-                <Link
-                  href={`/berita/${item.id}`}
-                  className="mt-5 inline-block rounded bg-blue-700 px-4 py-2 text-white"
-                >
-                  Baca Selengkapnya
-                </Link>
+              setUploading(false);
 
-              </div>
+              if (!hasil.success) {
+                alert("Upload gagal");
+                return;
+              }
 
+              setImage(hasil.filename);
+            }}
+          />
+
+          {uploading && (
+            <p className="text-blue-600">
+              Sedang mengupload gambar...
+            </p>
+          )}
+
+          {image && (
+            <div className="rounded border bg-green-50 p-3">
+              <p className="font-semibold text-green-700">
+                ✓ Upload berhasil
+              </p>
+
+              <p className="text-sm text-gray-600">
+                {image}
+              </p>
             </div>
-
-          ))}
+          )}
 
         </div>
-      </section>
 
-      <Footer />
-    </>
+        <textarea
+          rows={3}
+          placeholder="Ringkasan Berita"
+          className="w-full rounded border p-3"
+          value={excerpt}
+          onChange={(e) => setExcerpt(e.target.value)}
+          required
+        />
+
+        <textarea
+          rows={8}
+          placeholder="Isi Berita"
+          className="w-full rounded border p-3"
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          required
+        />
+
+        <div className="flex gap-3">
+          <button
+            type="submit"
+            className="rounded bg-blue-700 px-6 py-3 text-white"
+            disabled={uploading}
+          >
+            Simpan Berita
+          </button>
+
+          <button
+            type="button"
+            onClick={() => router.push("/admin/berita")}
+            className="rounded bg-gray-500 px-6 py-3 text-white"
+          >
+            Kembali
+          </button>
+        </div>
+
+      </form>
+    </main>
   );
 }

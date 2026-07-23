@@ -5,6 +5,9 @@ import { prisma } from "@/lib/prisma";
 
 export default async function BeritaPage() {
   const news = await prisma.news.findMany({
+    where: {
+      published: true,
+    },
     orderBy: {
       id: "desc",
     },
@@ -27,33 +30,45 @@ export default async function BeritaPage() {
       </section>
 
       <section className="mx-auto max-w-7xl px-6 py-16">
-        <div className="space-y-6">
-          {news.map((item) => (
-            <div
-              key={item.id}
-              className="rounded-xl border bg-white p-6 shadow-md"
-            >
-              <h2 className="text-2xl font-bold">
-                {item.title}
-              </h2>
+        {news.length === 0 ? (
+          <div className="rounded-xl border bg-white p-8 text-center shadow-md">
+            <h2 className="text-2xl font-semibold">
+              Belum ada berita yang dipublikasikan
+            </h2>
 
-              <p className="mt-2 text-sm text-gray-500">
-                {item.date}
-              </p>
-
-              <p className="mt-4 text-gray-600">
-                {item.excerpt}
-              </p>
-
-              <Link
-                href={`/berita/${item.id}`}
-                className="mt-4 inline-block font-semibold text-blue-700"
+            <p className="mt-2 text-gray-500">
+              Silakan kembali lagi nanti.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {news.map((item) => (
+              <div
+                key={item.id}
+                className="rounded-xl border bg-white p-6 shadow-md"
               >
-                Baca Selengkapnya →
-              </Link>
-            </div>
-          ))}
-        </div>
+                <h2 className="text-2xl font-bold">
+                  {item.title}
+                </h2>
+
+                <p className="mt-2 text-sm text-gray-500">
+                  {item.date}
+                </p>
+
+                <p className="mt-4 text-gray-600">
+                  {item.excerpt}
+                </p>
+
+                <Link
+                  href={`/berita/${item.id}`}
+                  className="mt-4 inline-block font-semibold text-blue-700"
+                >
+                  Baca Selengkapnya →
+                </Link>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
       <Footer />
