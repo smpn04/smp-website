@@ -2,9 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
-import fs from "fs/promises";
-import path from "path";
-import { v4 as uuid } from "uuid";
+import { put } from "@vercel/blob";
 
 export async function createGallery(formData: FormData) {
   const title = formData.get("title")?.toString().trim() || "";
@@ -14,22 +12,14 @@ export async function createGallery(formData: FormData) {
     throw new Error("Judul dan gambar wajib diisi.");
   }
 
-  const bytes = await image.arrayBuffer();
-  const buffer = Buffer.from(bytes);
-
-  const fileName = `${uuid()}-${image.name}`;
-
-  await fs.writeFile(
-    path.join(process.cwd(), "public", "gallery", fileName),
-    buffer
-  );
-
-  const imagePath = `/gallery/${fileName}`;
+  const blob = await put(image.name, image, {
+    access: "public",
+  });
 
   await prisma.gallery.create({
     data: {
       title,
-      image: imagePath,
+      image: blob.url,
       published: false,
     },
   });
@@ -40,6 +30,7 @@ export async function createGallery(formData: FormData) {
 export async function updateGallery(formData: FormData) {
   const id = Number(formData.get("id"));
   const title = formData.get("title")?.toString().trim() || "";
+
   const image = formData.get("image") as File;
 
   const data: {
@@ -50,23 +41,15 @@ export async function updateGallery(formData: FormData) {
   };
 
   if (image && image.size > 0) {
-    const bytes = await image.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    const blob = await put(image.name, image, {
+      access: "public",
+    });
 
-    const fileName = `${uuid()}-${image.name}`;
-
-    await fs.writeFile(
-      path.join(process.cwd(), "public", "gallery", fileName),
-      buffer
-    );
-
-    data.image = `/gallery/${fileName}`;
+    data.image = blob.url;
   }
 
   await prisma.gallery.update({
-    where: {
-      id,
-    },
+    where: { id },
     data,
   });
 
@@ -77,9 +60,7 @@ export async function deleteGallery(formData: FormData) {
   const id = Number(formData.get("id"));
 
   await prisma.gallery.delete({
-    where: {
-      id,
-    },
+    where: { id },
   });
 
   redirect("/admin/gallery");
