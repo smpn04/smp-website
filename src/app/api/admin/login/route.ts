@@ -5,30 +5,40 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    console.log("DATA DITERIMA:", body);
-
-    const news = await prisma.news.create({
-      data: {
-        title: body.title,
-        date: body.date,
-        image: body.image,
-        excerpt: body.excerpt,
-        content: body.content,
+    const admin = await prisma.admin.findFirst({
+      where: {
+        username: body.username,
+        password: body.password,
       },
     });
 
-    console.log("BERHASIL DISIMPAN:", news);
+    if (!admin) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Username atau password salah",
+        },
+        {
+          status: 401,
+        }
+      );
+    }
 
-    return NextResponse.json(news);
-
-  } catch (error: any) {
-    console.error("ERROR PRISMA:");
+    return NextResponse.json({
+      success: true,
+      admin: {
+        id: admin.id,
+        username: admin.username,
+        name: admin.name,
+      },
+    });
+  } catch (error) {
     console.error(error);
 
     return NextResponse.json(
       {
         success: false,
-        error: error.message,
+        message: "Terjadi kesalahan server",
       },
       {
         status: 500,

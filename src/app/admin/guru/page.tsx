@@ -1,13 +1,14 @@
 import Link from "next/link";
+import Image from "next/image";
 import { prisma } from "@/lib/prisma";
-import { deleteTeacher } from "@/actions/teacher";
+import DeleteButton from "./DeleteButton";
 
 export default async function AdminGuruPage() {
- const teachers = await prisma.teacher.findMany({
-  orderBy: {
-    id: "desc",
-  },
-});
+  const teachers = await prisma.teacher.findMany({
+    orderBy: {
+      id: "desc",
+    },
+  });
 
   return (
     <>
@@ -36,17 +37,21 @@ export default async function AdminGuruPage() {
         <table className="w-full border-collapse border">
           <thead className="bg-gray-100">
             <tr>
-              <th className="border p-3">No</th>
+              <th className="border p-3 w-16">No</th>
+              <th className="border p-3 w-28">Foto</th>
               <th className="border p-3">Nama</th>
               <th className="border p-3">Jabatan</th>
-              <th className="border p-3">Aksi</th>
+              <th className="border p-3 w-56">Aksi</th>
             </tr>
           </thead>
 
           <tbody>
             {teachers.length === 0 ? (
               <tr>
-                <td colSpan={4} className="border p-5 text-center">
+                <td
+                  colSpan={5}
+                  className="border p-5 text-center text-gray-500"
+                >
                   Belum ada data guru.
                 </td>
               </tr>
@@ -55,6 +60,16 @@ export default async function AdminGuruPage() {
                 <tr key={guru.id}>
                   <td className="border p-3 text-center">
                     {index + 1}
+                  </td>
+
+                  <td className="border p-3 text-center">
+                    <Image
+                      src={guru.photo || "/guru/default.jpg"}
+                      alt={guru.name}
+                      width={70}
+                      height={70}
+                      className="mx-auto rounded-full object-cover"
+                    />
                   </td>
 
                   <td className="border p-3">
@@ -74,20 +89,7 @@ export default async function AdminGuruPage() {
                         Edit
                       </Link>
 
-                      <form action={deleteTeacher}>
-                        <input
-                          type="hidden"
-                          name="id"
-                          value={guru.id}
-                        />
-
-                        <button
-                          type="submit"
-                          className="rounded bg-red-600 px-3 py-2 text-white"
-                        >
-                          Hapus
-                        </button>
-                      </form>
+                      <DeleteButton id={guru.id} />
                     </div>
                   </td>
                 </tr>
