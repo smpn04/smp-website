@@ -1,14 +1,23 @@
 import Link from "next/link";
 import Image from "next/image";
 import { prisma } from "@/lib/prisma";
-import { deleteGallery } from "@/actions/gallery";
+import DeleteButton from "./DeleteButton";
+import PublishButton from "./PublishButton";
+
+export const dynamic = "force-dynamic";
 
 export default async function AdminGalleryPage() {
-  const galleries = await prisma.gallery.findMany({
-    orderBy: {
-      id: "desc",
-    },
-  });
+  let galleries: any[] = [];
+
+  try {
+    galleries = await prisma.gallery.findMany({
+      orderBy: {
+        id: "desc",
+      },
+    });
+  } catch (error) {
+    console.error("Database belum tersedia:", error);
+  }
 
   return (
     <>
@@ -37,10 +46,11 @@ export default async function AdminGalleryPage() {
         <table className="w-full border-collapse border">
           <thead className="bg-gray-100">
             <tr>
-              <th className="border p-3">No</th>
+              <th className="border p-3 text-center w-16">No</th>
+              <th className="border p-3 text-center w-32">Foto</th>
               <th className="border p-3">Judul</th>
-              <th className="border p-3">Gambar</th>
-              <th className="border p-3">Aksi</th>
+              <th className="border p-3 w-36">Status</th>
+              <th className="border p-3 w-72">Aksi</th>
             </tr>
           </thead>
 
@@ -48,56 +58,68 @@ export default async function AdminGalleryPage() {
             {galleries.length === 0 ? (
               <tr>
                 <td
-                  colSpan={4}
-                  className="border p-5 text-center"
+                  colSpan={5}
+                  className="border p-5 text-center text-gray-500"
                 >
                   Belum ada foto.
                 </td>
               </tr>
             ) : (
-              galleries.map((gallery, index) => (
-                <tr key={gallery.id}>
+              galleries.map((item, index) => (
+                <tr key={item.id}>
                   <td className="border p-3 text-center">
                     {index + 1}
                   </td>
 
+                  <td className="border p-3 text-center">
+                    {item.image ? (
+                      <Image
+                        src={item.image}
+                        alt={item.title}
+                        width={100}
+                        height={70}
+                        className="mx-auto rounded object-cover"
+                      />
+                    ) : (
+                      <span className="text-gray-400">
+                        Tidak ada gambar
+                      </span>
+                    )}
+                  </td>
+
                   <td className="border p-3">
-                    {gallery.title}
+                    {item.title}
                   </td>
 
                   <td className="border p-3 text-center">
-                    <Image
-                      src={gallery.image}
-                      alt={gallery.title}
-                      width={120}
-                      height={80}
-                      className="mx-auto h-20 w-32 rounded-lg object-cover"
-                    />
+                    {item.published ? (
+                      <span className="rounded bg-green-100 px-3 py-1 text-sm font-semibold text-green-700">
+                        🟢 Publish
+                      </span>
+                    ) : (
+                      <span className="rounded bg-yellow-100 px-3 py-1 text-sm font-semibold text-yellow-700">
+                        🟡 Draft
+                      </span>
+                    )}
                   </td>
 
                   <td className="border p-3">
-                    <div className="flex justify-center gap-3">
+                    <div className="flex flex-wrap gap-2">
+
+                      <PublishButton
+                        id={item.id}
+                        published={item.published}
+                      />
+
                       <Link
-                        href={`/admin/gallery/edit/${gallery.id}`}
+                        href={`/admin/gallery/edit/${item.id}`}
                         className="rounded bg-blue-600 px-3 py-2 text-white"
                       >
                         Edit
                       </Link>
 
-                      <form action={deleteGallery}>
-                        <input
-                          type="hidden"
-                          name="id"
-                          value={gallery.id}
-                        />
+                      <DeleteButton id={item.id} />
 
-                        <button
-                          type="submit"
-                          className="rounded bg-red-600 px-3 py-2 text-white"
-                        >
-                          Hapus
-                        </button>
-                      </form>
                     </div>
                   </td>
                 </tr>

@@ -9,7 +9,7 @@ export async function PATCH(
     const { id } = await params;
     const body = await req.json();
 
-    const news = await prisma.news.update({
+    const gallery = await prisma.gallery.update({
       where: {
         id: Number(id),
       },
@@ -20,7 +20,7 @@ export async function PATCH(
 
     return NextResponse.json({
       success: true,
-      data: news,
+      data: gallery,
     });
   } catch (error: any) {
     console.error(error);
