@@ -1,36 +1,106 @@
-{
-  "name": "smp-website",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "prisma generate && next build",
-    "start": "next start",
-    "lint": "eslint"
-  },
-  "dependencies": {
-    "@prisma/client": "^6.19.3",
-    "@vercel/blob": "^2.6.1",
-    "bcryptjs": "^3.0.3",
-    "clsx": "^2.1.1",
-    "framer-motion": "^12.42.2",
-    "next": "16.2.10",
-    "prisma": "^6.19.3",
-    "react": "19.2.4",
-    "react-dom": "19.2.4",
-    "react-icons": "^5.7.0",
-    "sharp": "^0.35.3",
-    "swiper": "^14.0.5",
-    "uuid": "^14.0.1"
-  },
-  "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "16.2.10",
-    "tailwindcss": "^4",
-    "typescript": "^5"
+"use server";
+
+import { prisma } from "@/lib/prisma";
+import { redirect } from "next/navigation";
+import { put } from "@vercel/blob";
+
+export async function createGallery(formData: FormData) {
+  const title = formData.get("title")?.toString().trim() || "";
+  const image = formData.get("image") as File;
+
+  if (!title || !image || image.size === 0) {
+    throw new Error("Judul dan gambar wajib diisi.");
   }
+
+  const token = process.env.BLOB_READ_WRITE_TOKEN;
+
+  if (!token) {
+    throw new Error("BLOB_READ_WRITE_TOKEN tidak ditemukan.");
+  }
+
+  const blob = await put(image.name, image, {
+    access: "public",
+    token,
+  });
+
+  await prisma.gallery.create({
+    data: {
+      title,
+      image: blob.url,
+      published: false,
+    },
+  });
+
+  redirect("/admin/gallery");
+}
+
+export async function updateGallery(formData: FormData) {
+  const id = Number(formData.get("id"));
+  const title = formData.get("title")?.toString().trim() || "";
+  const image = formData.get("image") as File;
+
+  const data: {
+    title: string;
+    image?: string;
+  } = {
+    title,
+  };
+
+  const token = process.env.BLOB_READ_WRITE_TOKEN;
+
+  if (!token) {
+    throw new Error("BLOB_READ_WRITE_TOKEN tidak ditemukan.");
+  }
+
+  if (image && image.size > 0) {
+    const blob = await put(image.name, image, {
+      access: "public",
+      token,
+    });
+
+    data.image = blob.url;
+  }
+
+  await prisma.gallery.update({
+    where: { id },
+    data,
+  });
+
+  redirect("/admin/gallery");
+}
+
+export async function deleteGallery(formData: FormData) {
+  const id = Number(formData.get("id"));
+
+  await prisma.gallery.delete({
+    where: { id },
+  });
+
+  redirect("/admin/gallery");
+}
+
+export async function publishGallery(formData: FormData) {
+  const id = Number(formData.get("id"));
+
+  await prisma.gallery.update({
+    where: { id },
+    data: {
+      published: true,
+    },
+  });
+
+  redirect("/admin/gallery");
+}
+
+export async function unpublishGallery(formData: FormData) {
+  const id = Number(formData.get("id"));
+
+  await prisma.gallery.update({
+    where: { id },
+    data: {
+      published: false,
+    },
+  });
+
+  redirect("/admin/gallery");
 }
