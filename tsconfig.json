@@ -33,7 +33,7 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts",
     "prisma.config.ts.bak"
-  ],
+, "src/middleware.ts.bak"  ],
 
   "exclude": ["node_modules"]
 }
