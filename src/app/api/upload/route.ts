@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
-import { randomUUID } from "crypto";
+import { put } from "@vercel/blob";
 
 export async function POST(req: NextRequest) {
   try {
+    console.log(
+      "BLOB TOKEN ADA:",
+      !!process.env.BLOB_READ_WRITE_TOKEN
+    );
+
     const data = await req.formData();
 
     const file = data.get("file") as File | null;
@@ -21,42 +24,33 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
-    const ext = path.extname(file.name);
-    const filename = `${randomUUID()}${ext}`;
-
-    // Folder khusus berita
-    const uploadDir = path.join(
-      process.cwd(),
-      "public",
-      "uploads",
-      "berita"
+    const blob = await put(
+      file.name,
+      file,
+      {
+        access: "public",
+        token: process.env.BLOB_READ_WRITE_TOKEN,
+      }
     );
 
-    // Pastikan folder ada
-    await mkdir(uploadDir, {
-      recursive: true,
-    });
-
-    await writeFile(
-      path.join(uploadDir, filename),
-      buffer
-    );
+    console.log("UPLOAD BERHASIL:", blob.url);
 
     return NextResponse.json({
       success: true,
-      filename: `/uploads/berita/${filename}`,
+      url: blob.url,
     });
 
-  } catch (error) {
-    console.error(error);
+  } catch (error: any) {
+    console.error(
+      "UPLOAD ERROR:",
+      error
+    );
 
     return NextResponse.json(
       {
         success: false,
-        message: "Upload gagal.",
+        message:
+          error.message || "Upload gagal.",
       },
       {
         status: 500,
