@@ -7,60 +7,86 @@ import Link from "next/link";
 export default function TambahBeritaPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false); // Indikator status upload file ke Vercel Blob
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const [title, setTitle] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [excerpt, setExcerpt] = useState("");
   const [content, setContent] = useState("");
-  const [image, setImage] = useState(""); // Menyimpan URL hasil upload Vercel Blob
+  const [image, setImage] = useState("");
   const [fileName, setFileName] = useState("");
 
-  // Handler Upload Foto langsung ke API Vercel Blob
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Mengubah Gambar ke Base64 Terkompresi (< 100KB)
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setFileName(file.name);
-    setUploading(true);
+    setIsProcessing(true);
 
-    const formData = new FormData();
-    formData.append("file", file);
+    const reader = new FileReader();
 
-    try {
-      // Panggil API Upload Vercel Blob kamu
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      const result = await res.json();
-
-      if (res.ok && result.success && result.url) {
-        setImage(result.url); // 🎯 MASUKKAN URL HASIL UPLOAD KE STATE
-        console.log("Upload berhasil, URL:", result.url);
-      } else {
-        alert(`Gagal upload foto: ${result.message || "Terjadi kesalahan"}`);
-        setImage("");
+    reader.onload = (event) => {
+      const rawBase64 = event.target?.result as string;
+      if (!rawBase64) {
+        setIsProcessing(false);
+        return;
       }
-    } catch (error: any) {
-      alert(`Error saat upload foto: ${error.message}`);
-      setImage("");
-    } finally {
-      setUploading(false);
-    }
+
+      const img = new Image();
+      img.src = rawBase64;
+
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const MAX_WIDTH = 800; // Kompres resolusi agar ringan
+
+        let width = img.width;
+        let height = img.height;
+
+        if (width > MAX_WIDTH) {
+          height = Math.round((height * MAX_WIDTH) / width);
+          width = MAX_WIDTH;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          // Kompresi JPEG Kualitas 60%
+          const compressedBase64 = canvas.toDataURL("image/jpeg", 0.6);
+          setImage(compressedBase64);
+        } else {
+          setImage(rawBase64);
+        }
+        setIsProcessing(false);
+      };
+
+      img.onerror = () => {
+        setImage(rawBase64);
+        setIsProcessing(false);
+      };
+    };
+
+    reader.onerror = () => {
+      alert("Gagal membaca file foto.");
+      setIsProcessing(false);
+    };
+
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!title) {
-      alert("Judul berita harus diisi!");
+      alert("Judul berita wajib diisi!");
       return;
     }
 
-    if (uploading) {
-      alert("Proses upload foto belum selesai. Mohon tunggu sebentar!");
+    if (isProcessing) {
+      alert("Foto sedang diproses, tunggu sebentar...");
       return;
     }
 
@@ -77,7 +103,7 @@ export default function TambahBeritaPage() {
           date,
           excerpt,
           content,
-          image, // URL dari Vercel Blob dikirim ke database Prisma
+          image, // String Base64 langsung dikirim
           published: false,
         }),
       });
@@ -85,7 +111,7 @@ export default function TambahBeritaPage() {
       const result = await res.json();
 
       if (res.ok && result.success) {
-        alert("Berita dan foto berhasil disimpan!");
+        alert("Berita & Foto Berhasil Disimpan!");
         router.push("/admin/berita");
         router.refresh();
       } else {
@@ -149,22 +175,22 @@ export default function TambahBeritaPage() {
               onChange={handleFileSelect}
               className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />
-            {uploading && (
-              <p className="text-xs text-blue-600 mt-1 font-medium animate-pulse">
-                ⏳ Mengunggah foto ke server...
+            {isProcessing && (
+              <p className="text-xs text-blue-600 mt-1 font-medium">
+                ⏳ Memproses foto...
               </p>
             )}
-            {fileName && !uploading && image && (
+            {fileName && !isProcessing && image && (
               <p className="text-xs text-green-600 mt-1 font-medium">
-                ✓ Foto berhasil diunggah!
+                ✓ Foto Siap Disimpan!
               </p>
             )}
           </div>
         </div>
 
-        {image && !uploading && (
+        {image && !isProcessing && (
           <div>
-            <p className="text-xs text-gray-500 mb-1">Preview Foto (Siap Simpan):</p>
+            <p className="text-xs text-gray-500 mb-1">Preview Foto:</p>
             <img
               src={image}
               alt="Preview"
@@ -201,10 +227,10 @@ export default function TambahBeritaPage() {
 
         <button
           type="submit"
-          disabled={loading || uploading}
+          disabled={loading || isProcessing}
           className="rounded-lg bg-blue-900 px-6 py-3 text-sm font-bold text-white hover:bg-blue-800 disabled:opacity-50 transition"
         >
-          {loading ? "Menyimpan Berita..." : uploading ? "Mengunggah Foto..." : "Simpan Berita"}
+          {loading ? "Menyimpan Berita..." : isProcessing ? "Memproses Foto..." : "Simpan Berita"}
         </button>
       </form>
     </div>
