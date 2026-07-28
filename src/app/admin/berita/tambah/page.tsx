@@ -7,42 +7,20 @@ import Link from "next/link";
 export default function TambahBeritaPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
 
   const [title, setTitle] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [excerpt, setExcerpt] = useState("");
   const [content, setContent] = useState("");
-  const [image, setImage] = useState("");
 
-  // Upload langsung ke Vercel Blob via API /api/upload
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>("");
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploading(true);
-    setImage(""); // Reset
-
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      const result = await res.json();
-
-      if (res.ok && result.success && result.url) {
-        setImage(result.url); // Menyimpan URL resmi dari Vercel Blob
-      } else {
-        alert(`Gagal unggah foto: ${result.message || "Terjadi kesalahan"}`);
-      }
-    } catch (error: any) {
-      alert(`Error upload foto: ${error.message}`);
-    } finally {
-      setUploading(false);
+    if (file) {
+      setSelectedFile(file);
+      setPreviewUrl(URL.createObjectURL(file));
     }
   };
 
@@ -54,14 +32,35 @@ export default function TambahBeritaPage() {
       return;
     }
 
-    if (uploading) {
-      alert("Foto sedang dalam proses upload, tunggu sebentar...");
-      return;
-    }
-
     setLoading(true);
 
     try {
+      let finalImageUrl = "";
+
+      // TAHAP 1: UPLOAD GAMBAR
+      if (selectedFile) {
+        const formData = new FormData();
+        formData.append("file", selectedFile);
+
+        const uploadRes = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        const uploadResult = await uploadRes.json();
+
+        // 🔍 DEBUG ALERT 1
+        if (!uploadRes.ok || !uploadResult.success) {
+          alert(`[GAGAL DI TAHAP 1 - UPLOAD API]\nPesan: ${uploadResult.message || "Gagal upload ke Vercel Blob"}`);
+          setLoading(false);
+          return;
+        }
+
+        finalImageUrl = uploadResult.url;
+        alert(`[TAHAP 1 BERHASIL]\nURL Gambar: ${finalImageUrl}`);
+      }
+
+      // TAHAP 2: SIMPAN KE DATABASE
       const res = await fetch("/api/admin/berita", {
         method: "POST",
         headers: {
@@ -72,22 +71,23 @@ export default function TambahBeritaPage() {
           date,
           excerpt,
           content,
-          image, // URL dari Vercel Blob dikirim ke Prisma
+          image: finalImageUrl,
           published: false,
         }),
       });
 
       const result = await res.json();
 
+      // 🔍 DEBUG ALERT 2
       if (res.ok && result.success) {
-        alert("Berita Berhasil Disimpan!");
+        alert("Berita Berhasil Disimpan ke Database!");
         router.push("/admin/berita");
         router.refresh();
       } else {
-        alert(`Gagal menyimpan: ${result.message || "Terjadi kesalahan server"}`);
+        alert(`[GAGAL DI TAHAP 2 - PRISMA DB]\nPesan: ${result.message || "Gagal menyimpan ke database"}`);
       }
     } catch (error: any) {
-      alert(`Error: ${error.message}`);
+      alert(`[ERROR SYSTEM]: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -141,27 +141,17 @@ export default function TambahBeritaPage() {
             <input
               type="file"
               accept="image/*"
-              onChange={handleFileSelect}
+              onChange={handleFileChange}
               className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />
-            {uploading && (
-              <p className="text-xs text-blue-600 mt-1 font-medium animate-pulse">
-                ⏳ Mengunggah foto ke server...
-              </p>
-            )}
-            {image && !uploading && (
-              <p className="text-xs text-green-600 mt-1 font-medium">
-                ✓ Foto Siap Disimpan!
-              </p>
-            )}
           </div>
         </div>
 
-        {image && !uploading && (
+        {previewUrl && (
           <div>
-            <p className="text-xs text-gray-500 mb-1">Preview Foto:</p>
+            <p className="text-xs text-gray-500 mb-1">Preview Foto Terpilih:</p>
             <img
-              src={image}
+              src={previewUrl}
               alt="Preview"
               className="h-36 w-auto rounded border object-cover shadow-sm"
             />
@@ -196,10 +186,10 @@ export default function TambahBeritaPage() {
 
         <button
           type="submit"
-          disabled={loading || uploading}
+          disabled={loading}
           className="rounded-lg bg-blue-900 px-6 py-3 text-sm font-bold text-white hover:bg-blue-800 disabled:opacity-50 transition"
         >
-          {loading ? "Menyimpan Berita..." : uploading ? "Mengunggah Foto..." : "Simpan Berita"}
+          {loading ? "Proses..." : "Simpan Berita"}
         </button>
       </form>
     </div>
