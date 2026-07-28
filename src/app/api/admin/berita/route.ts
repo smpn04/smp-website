@@ -1,44 +1,40 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/prisma"; // sesuaikan path ke prisma client kamu
 
-export async function POST(req: Request) {
+export async function POST(request: Request) {
   try {
-    const body = await req.json();
+    const body = await request.json();
+    const { title, date, excerpt, content, image, published } = body;
 
-    // Validasi & pastikan field gambar tidak merusak Prisma jika terlalu besar / kosong
-    let imageUrl = body.image || "";
-
-    // Jika gambar kosong, beri gambar placeholder default agar Prisma tidak error
-    if (!imageUrl || imageUrl.trim() === "") {
-      imageUrl = "https://images.unsplash.com/photo-1577896851231-70ef18881754?w=600&auto=format&fit=crop&q=60";
+    if (!title) {
+      return NextResponse.json(
+        { success: false, message: "Judul berita wajib diisi" },
+        { status: 400 }
+      );
     }
 
-    const news = await prisma.news.create({
+    // PANGGUL prisma.news (sesuai nama model di schema.prisma)
+    const newNews = await prisma.news.create({
       data: {
-        title: body.title || "Berita Tanpa Judul",
-        date: String(body.date || new Date().toISOString().split("T")[0]),
-        image: imageUrl,
-        excerpt: String(body.excerpt || ""),
-        content: String(body.content || ""),
-        published: Boolean(body.published ?? false),
+        title,
+        date: date || new Date().toISOString().split("T")[0],
+        image: image || "", // Menyimpan string Base64 ke kolom @db.Text
+        excerpt: excerpt || "",
+        content: content || "",
+        published: published ?? false,
       },
     });
 
     return NextResponse.json({
       success: true,
-      data: news,
+      message: "Berita berhasil disimpan",
+      data: newNews,
     });
   } catch (error: any) {
-    console.error("ERROR PRISMA UPLOAD:", error);
-
+    console.error("Error creating news:", error);
     return NextResponse.json(
-      {
-        success: false,
-        message: error.message || "Gagal menyimpan berita",
-      },
-      {
-        status: 500,
-      }
+      { success: false, message: error.message || "Gagal menyimpan ke database" },
+      { status: 500 }
     );
   }
 }
