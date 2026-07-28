@@ -1,9 +1,20 @@
 import Header from "../../components/layout/Header";
 import Footer from "../../components/layout/Footer";
 import Image from "next/image";
-import gallery from "../../data/gallery";
+import { prisma } from "@/lib/prisma";
 
-export default function GaleriPage() {
+export const dynamic = "force-dynamic";
+
+export default async function GaleriPage() {
+  const gallery = await prisma.gallery.findMany({
+    where: {
+      published: true,
+    },
+    orderBy: {
+      id: "desc",
+    },
+  });
+
   return (
     <>
       <Header />
@@ -19,28 +30,34 @@ export default function GaleriPage() {
       </section>
 
       <section className="mx-auto max-w-7xl px-6 py-16">
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {gallery.map((photo) => (
-            <div
-              key={photo.id}
-              className="overflow-hidden rounded-xl border shadow-md"
-            >
-              <Image
-                src={photo.image}
-                alt={photo.title}
-                width={600}
-                height={400}
-                className="h-64 w-full object-cover"
-              />
+        {gallery.length === 0 ? (
+          <p className="text-center text-gray-500">
+            Belum ada foto yang dipublikasikan.
+          </p>
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {gallery.map((photo) => (
+              <div
+                key={photo.id}
+                className="overflow-hidden rounded-xl border shadow-md"
+              >
+                <Image
+                  src={photo.image}
+                  alt={photo.title}
+                  width={600}
+                  height={400}
+                  className="h-64 w-full object-cover"
+                />
 
-              <div className="p-4">
-                <h2 className="text-lg font-semibold">
-                  {photo.title}
-                </h2>
+                <div className="p-4">
+                  <h2 className="text-lg font-semibold">
+                    {photo.title}
+                  </h2>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </section>
 
       <Footer />
