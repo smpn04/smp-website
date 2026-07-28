@@ -7,6 +7,7 @@ import Link from "next/link";
 export default function TambahBeritaPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [isCompressing, setIsCompressing] = useState(false);
 
   const [title, setTitle] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
@@ -15,24 +16,64 @@ export default function TambahBeritaPage() {
   const [image, setImage] = useState("");
   const [fileName, setFileName] = useState("");
 
-  // Handler Gambar LOKAL (Tanpa API Upload Eksternal)
+  // Handler Gambar dengan KOMPRESI OTOMATIS (Mencegah Payload Error Vercel)
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setFileName(file.name);
+    setIsCompressing(true);
 
     const reader = new FileReader();
 
     reader.onload = (event) => {
-      const base64 = event.target?.result as string;
-      if (base64) {
-        setImage(base64); // Langsung simpan string foto ke state
+      const rawBase64 = event.target?.result as string;
+      if (!rawBase64) {
+        setIsCompressing(false);
+        return;
       }
+
+      // Buat objek gambar untuk dikompres resolusinya
+      const img = new Image();
+      img.src = rawBase64;
+
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const MAX_WIDTH = 800; // Ukuran lebar optimal untuk web/tabel
+
+        let width = img.width;
+        let height = img.height;
+
+        if (width > MAX_WIDTH) {
+          height = Math.round((height * MAX_WIDTH) / width);
+          width = MAX_WIDTH;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          // Kompres ke format JPEG kualitas 70% (Ukuran file turun dari 5MB -> ~100KB)
+          const compressedBase64 = canvas.toDataURL("image/jpeg", 0.7);
+          setImage(compressedBase64);
+        } else {
+          setImage(rawBase64);
+        }
+        setIsCompressing(false);
+      };
+
+      img.onerror = () => {
+        // Fallback jika kompresi canvas gagal
+        setImage(rawBase64);
+        setIsCompressing(false);
+      };
     };
 
     reader.onerror = () => {
       alert("Gagal membaca file gambar dari komputer/HP.");
+      setIsCompressing(false);
     };
 
     reader.readAsDataURL(file);
@@ -43,6 +84,11 @@ export default function TambahBeritaPage() {
 
     if (!title) {
       alert("Judul berita harus diisi!");
+      return;
+    }
+
+    if (isCompressing) {
+      alert("Foto sedang diproses/dikompres, tunggu sebentar lalu coba lagi!");
       return;
     }
 
@@ -59,7 +105,7 @@ export default function TambahBeritaPage() {
           date,
           excerpt,
           content,
-          image, // Mengirimkan base64 langsung ke Prisma
+          image, // Base64 terkompresi aman terkirim ke Prisma & Vercel
           published: false,
         }),
       });
@@ -131,7 +177,12 @@ export default function TambahBeritaPage() {
               onChange={handleFileSelect}
               className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />
-            {fileName && (
+            {isCompressing && (
+              <p className="text-xs text-blue-600 mt-1 font-medium">
+                ⏳ Mengompres resolusi foto...
+              </p>
+            )}
+            {fileName && !isCompressing && (
               <p className="text-xs text-green-600 mt-1 font-medium">
                 ✓ Terpilih: {fileName}
               </p>
@@ -139,9 +190,9 @@ export default function TambahBeritaPage() {
           </div>
         </div>
 
-        {image && (
+        {image && !isCompressing && (
           <div>
-            <p className="text-xs text-gray-500 mb-1">Preview Foto:</p>
+            <p className="text-xs text-gray-500 mb-1">Preview Foto (Siap Simpan):</p>
             <img
               src={image}
               alt="Preview"
@@ -178,10 +229,10 @@ export default function TambahBeritaPage() {
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || isCompressing}
           className="rounded-lg bg-blue-900 px-6 py-3 text-sm font-bold text-white hover:bg-blue-800 disabled:opacity-50 transition"
         >
-          {loading ? "Menyimpan Berita..." : "Simpan Berita"}
+          {loading ? "Menyimpan Berita..." : isCompressing ? "Memproses Foto..." : "Simpan Berita"}
         </button>
       </form>
     </div>
