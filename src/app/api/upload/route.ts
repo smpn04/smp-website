@@ -13,17 +13,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 🎯 CARA AMPUH: Buat nama file unik memakai Date.now()
-    const filename = `${Date.now()}-${file.name.replace(/\s+/g, "-")}`;
+    // Ambil ekstensi & buat nama file aman
+    const ext = file.name.split(".").pop() || "jpg";
+    const cleanName = file.name
+      .replace(/\.[^/.]+$/, "") // hapus ekstensi lama
+      .replace(/[^a-zA-Z0-9]/g, "-"); // bersihkan karakter aneh/spasi
 
-    const blob = await put(filename, file, {
+    // Buat path unik dengan Timestamp
+    const pathname = `berita/${Date.now()}-${cleanName}.${ext}`;
+
+    // Jalankan Vercel Blob PUT tanpa bentrokan opsi
+    const blob = await put(pathname, file, {
       access: "public",
       token: process.env.BLOB_READ_WRITE_TOKEN,
-      addRandomSuffix: true,
-      allowOverwrite: true, // 👈 TAMBAHKAN BARIS INI
+      addRandomSuffix: true, // Vercel akan otomatis menambahkan akhiran unik
     });
 
-    console.log("UPLOAD BERHASIL:", blob.url);
+    console.log("UPLOAD SUCCESS:", blob.url);
 
     return NextResponse.json({
       success: true,
