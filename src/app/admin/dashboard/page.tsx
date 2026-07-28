@@ -1,64 +1,69 @@
-import { prisma } from "@/lib/prisma";
+import Link from "next/link";
 
-export default async function DashboardPage() {
-  const totalBerita = await prisma.news.count();
-  const totalGuru = await prisma.teacher.count();
-  const totalGaleri = await prisma.gallery.count();
-  const totalPPDB = await prisma.pPDB.count();
-
+export default function DashboardPage() {
   return (
-    <>
-      <h1 className="text-4xl font-bold">
-        Dashboard Admin
-      </h1>
+    <div className="flex min-h-screen">
 
-      <p className="mt-2 text-gray-600">
-        Selamat datang di Panel Admin Website UPT SMP Negeri 4 Duampanua.
-      </p>
+      <aside className="w-64 bg-blue-900 p-6 text-white">
 
-      <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+        <h1 className="mb-10 text-2xl font-bold">
+          Admin SMP
+        </h1>
 
-        <div className="rounded-xl bg-blue-600 p-6 text-white shadow-lg">
-          <h2 className="text-lg font-semibold">
-            📰 Total Berita
-          </h2>
+        <nav className="space-y-4">
 
-          <p className="mt-4 text-5xl font-bold">
-            {totalBerita}
-          </p>
-        </div>
+          <Link href="/admin/dashboard" className="block">
+            🏠 Dashboard
+          </Link>
 
-        <div className="rounded-xl bg-green-600 p-6 text-white shadow-lg">
-          <h2 className="text-lg font-semibold">
-            👨‍🏫 Total Guru
-          </h2>
+          <Link href="/admin/dashboard/profil" className="block">
+            📄 Profil
+          </Link>
 
-          <p className="mt-4 text-5xl font-bold">
-            {totalGuru}
-          </p>
-        </div>
+          <Link href="/admin/dashboard/guru" className="block">
+            👨‍🏫 Guru
+          </Link>
 
-        <div className="rounded-xl bg-purple-600 p-6 text-white shadow-lg">
-          <h2 className="text-lg font-semibold">
-            🖼 Total Galeri
-          </h2>
+          <Link href="/admin/dashboard/akademik" className="block">
+            📚 Akademik
+          </Link>
 
-          <p className="mt-4 text-5xl font-bold">
-            {totalGaleri}
-          </p>
-        </div>
+          <Link href="/admin/dashboard/prestasi" className="block">
+            🏆 Prestasi
+          </Link>
 
-        <div className="rounded-xl bg-orange-500 p-6 text-white shadow-lg">
-          <h2 className="text-lg font-semibold">
-            📝 Total PPDB
-          </h2>
+          <Link href="/admin/dashboard/ppdb" className="block">
+            📝 PPDB
+          </Link>
 
-          <p className="mt-4 text-5xl font-bold">
-            {totalPPDB}
-          </p>
-        </div>
+          <Link href="/admin/dashboard/berita" className="block">
+            📰 Berita
+          </Link>
 
-      </div>
-    </>
+          <Link href="/admin/dashboard/galeri" className="block">
+            🖼️ Galeri
+          </Link>
+
+          <Link href="/admin/dashboard/kontak" className="block">
+            ☎ Kontak
+          </Link>
+
+        </nav>
+
+      </aside>
+
+      <main className="flex-1 bg-gray-100 p-10">
+
+        <h1 className="text-4xl font-bold">
+          Dashboard
+        </h1>
+
+        <p className="mt-3 text-gray-600">
+          Selamat datang di Panel Admin Website UPT SMP Negeri 4 Duampanua.
+        </p>
+
+      </main>
+
+    </div>
   );
 }
