@@ -9,16 +9,24 @@ export default function AdminProfilPage() {
   const [formData, setFormData] = useState({
     namaSekolah: "UPT SMP Negeri 4 Duampanua",
     kepalaSekolah: "Nama Kepala Sekolah, S.Pd., M.Pd.",
-    fotoKepsek: "", // Menyimpan foto dalam bentuk Data URL / Base64
+    fotoKepsek: "",
     sambutan:
       "Assalamu’alaikum Warahmatullahi Wabarakatuh. Selamat datang di website resmi UPT SMP Negeri 4 Duampanua.",
     visi: "Terwujudnya peserta didik yang berprestasi, berkarakter, unggul, dan berwawasan lingkungan.",
+    // Data Statistik Sekolah
+    jumlahSiswa: "350+",
+    jumlahGuru: "25+",
+    jumlahKelas: "12",
+    jumlahPrestasi: "45+",
   });
 
   useEffect(() => {
     const savedData = localStorage.getItem("profilSekolah");
     if (savedData) {
-      setFormData(JSON.parse(savedData));
+      setFormData((prev) => ({
+        ...prev,
+        ...JSON.parse(savedData),
+      }));
     }
   }, []);
 
@@ -31,7 +39,6 @@ export default function AdminProfilPage() {
     });
   };
 
-  // Fungsi untuk handle upload foto
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -63,16 +70,16 @@ export default function AdminProfilPage() {
     <div className="max-w-4xl space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-gray-800">
-          Edit Profil & Sambutan
+          Edit Profil, Sambutan & Statistik
         </h1>
         <p className="text-sm text-gray-500">
-          Ubah teks dan foto kepala sekolah yang akan tampil di Halaman Depan.
+          Ubah informasi sekolah, foto, dan angka statistik yang tampil di Halaman Depan.
         </p>
       </div>
 
       {sukses && (
         <div className="p-4 bg-green-100 border border-green-300 text-green-800 rounded-lg text-sm font-medium">
-          ✅ Berhasil disimpan! Foto & Teks sudah diperbarui di Halaman Home.
+          ✅ Berhasil disimpan! Semua perubahan sudah diperbarui di Halaman Home.
         </div>
       )}
 
@@ -80,6 +87,11 @@ export default function AdminProfilPage() {
         onSubmit={handleSubmit}
         className="space-y-6 rounded-xl bg-white p-6 shadow-sm border border-gray-100"
       >
+        {/* SECTION 1: PROFIL KEPALA SEKOLAH */}
+        <h2 className="text-lg font-bold text-blue-900 border-b pb-2">
+          1. Kepala Sekolah & Sambutan
+        </h2>
+
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <div>
             <label className="block text-sm font-medium text-gray-700">
@@ -108,11 +120,10 @@ export default function AdminProfilPage() {
           </div>
         </div>
 
-        {/* Preview Foto Jika Ada */}
         {formData.fotoKepsek && (
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-2">
-              Preview Foto:
+              Preview Foto Kepala Sekolah:
             </label>
             <img
               src={formData.fotoKepsek}
@@ -135,13 +146,80 @@ export default function AdminProfilPage() {
           />
         </div>
 
-        <div className="flex justify-end">
+        {/* SECTION 2: STATISTIK SEKOLAH */}
+        <h2 className="text-lg font-bold text-blue-900 border-b pb-2 pt-4">
+          2. Angka Statistik Sekolah
+        </h2>
+
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Jumlah Siswa
+            </label>
+            <input
+              type="text"
+              name="jumlahSiswa"
+              value={formData.jumlahSiswa}
+              onChange={handleChange}
+              placeholder="Contoh: 350+"
+              className="mt-1 w-full rounded-lg border border-gray-300 p-2.5 text-sm focus:border-blue-500 focus:outline-none"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Jumlah Guru
+            </label>
+            <input
+              type="text"
+              name="jumlahGuru"
+              value={formData.jumlahGuru}
+              onChange={handleChange}
+              placeholder="Contoh: 25+"
+              className="mt-1 w-full rounded-lg border border-gray-300 p-2.5 text-sm focus:border-blue-500 focus:outline-none"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Rombongan Belajar / Kelas
+            </label>
+            <input
+              type="text"
+              name="jumlahKelas"
+              value={formData.jumlahKelas}
+              onChange={handleChange}
+              placeholder="Contoh: 12"
+              className="mt-1 w-full rounded-lg border border-gray-300 p-2.5 text-sm focus:border-blue-500 focus:outline-none"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Total Prestasi
+            </label>
+            <input
+              type="text"
+              name="jumlahPrestasi"
+              value={formData.jumlahPrestasi}
+              onChange={handleChange}
+              placeholder="Contoh: 45+"
+              className="mt-1 w-full rounded-lg border border-gray-300 p-2.5 text-sm focus:border-blue-500 focus:outline-none"
+              required
+            />
+          </div>
+        </div>
+
+        <div className="flex justify-end pt-4">
           <button
             type="submit"
             disabled={loading}
             className="rounded-lg bg-blue-900 px-6 py-2.5 text-sm font-medium text-white hover:bg-blue-800 disabled:opacity-50 transition"
           >
-            {loading ? "Menyimpan..." : "💾 Simpan Perubahan"}
+            {loading ? "Menyimpan..." : "💾 Simpan Semua Perubahan"}
           </button>
         </div>
       </form>
