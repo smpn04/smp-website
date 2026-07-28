@@ -1,44 +1,47 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
 export default function PrincipalWelcome() {
+  const [data, setData] = useState({
+    kepalaSekolah: "Nama Kepala Sekolah, S.Pd., M.Pd.",
+    sambutan:
+      "Assalamu’alaikum Warahmatullahi Wabarakatuh. Selamat datang di website resmi UPT SMP Negeri 4 Duampanua. Puji syukur kita panjatkan kehadirat Allah SWT atas terwujudnya media informasi ini.",
+  });
+
+  useEffect(() => {
+    const savedData = localStorage.getItem("profilSekolah");
+    if (savedData) {
+      const parsed = JSON.parse(savedData);
+      setData({
+        kepalaSekolah: parsed.kepalaSekolah || data.kepalaSekolah,
+        sambutan: parsed.sambutan || data.sambutan,
+      });
+    }
+  }, []);
+
   return (
-    <section className="bg-gray-50 py-20">
-      <div className="mx-auto grid max-w-7xl items-center gap-10 px-6 md:grid-cols-2">
-        <div>
-          <img
-            src="https://placehold.co/500x600"
-            alt="Kepala Sekolah"
-            className="rounded-2xl shadow-lg"
-          />
-        </div>
+    <section id="sambutan" className="py-16 bg-white">
+      <div className="mx-auto max-w-7xl px-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 items-center">
+          <div className="flex justify-center">
+            <div className="h-64 w-56 rounded-xl bg-slate-200 border-4 border-blue-900 shadow-md flex flex-col items-center justify-center">
+              <span className="text-6xl">👨‍💼</span>
+              <span className="mt-2 text-xs text-slate-500 font-medium">Foto Kepala Sekolah</span>
+            </div>
+          </div>
 
-        <div>
-          <p className="font-semibold text-blue-700">
-            Sambutan Kepala Sekolah
-          </p>
-
-          <h2 className="mt-3 text-4xl font-bold text-gray-900">
-            Selamat Datang di Website Resmi SMP Negeri
-          </h2>
-
-          <p className="mt-6 leading-8 text-gray-600">
-            Website ini menjadi media informasi resmi sekolah yang
-            memberikan berbagai informasi mengenai kegiatan akademik,
-            prestasi siswa, layanan PPDB, serta berbagai program sekolah.
-          </p>
-
-          <p className="mt-4 leading-8 text-gray-600">
-            Kami berkomitmen menciptakan lingkungan belajar yang
-            nyaman, inovatif, dan berkarakter sehingga mampu
-            menghasilkan generasi yang unggul.
-          </p>
-
-          <div className="mt-8">
-            <h3 className="text-xl font-bold">
-              Drs. Nama Kepala Sekolah
-            </h3>
-
-            <p className="text-gray-500">
-              Kepala SMP Negeri
+          <div className="md:col-span-2 space-y-4">
+            <h2 className="text-2xl font-bold text-blue-900 border-b-2 border-yellow-400 pb-2 inline-block">
+              Sambutan Kepala Sekolah
+            </h2>
+            <p className="text-slate-600 leading-relaxed italic">
+              "{data.sambutan}"
             </p>
+            <div className="pt-2">
+              <p className="font-bold text-slate-800">{data.kepalaSekolah}</p>
+              <p className="text-xs text-slate-500">Kepala UPT SMPN 4 Duampanua</p>
+            </div>
           </div>
         </div>
       </div>
