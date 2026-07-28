@@ -16,35 +16,35 @@ export default function DashboardPage() {
             🏠 Dashboard
           </Link>
 
-          <Link href="/admin/profil" className="block">
+          <Link href="/admin/dashboard/profil" className="block">
             📄 Profil
           </Link>
 
-          <Link href="/admin/guru" className="block">
+          <Link href="/admin/dashboard/guru" className="block">
             👨‍🏫 Guru
           </Link>
 
-          <Link href="/admin/akademik" className="block">
+          <Link href="/admin/dashboard/akademik" className="block">
             📚 Akademik
           </Link>
 
-          <Link href="/admin/prestasi" className="block">
+          <Link href="/admin/dashboard/prestasi" className="block">
             🏆 Prestasi
           </Link>
 
-          <Link href="/admin/ppdb" className="block">
+          <Link href="/admin/dashboard/ppdb" className="block">
             📝 PPDB
           </Link>
 
-          <Link href="/admin/berita" className="block">
+          <Link href="/admin/dashboard/berita" className="block">
             📰 Berita
           </Link>
 
-          <Link href="/admin/galeri" className="block">
+          <Link href="/admin/dashboard/galeri" className="block">
             🖼️ Galeri
           </Link>
 
-          <Link href="/admin/kontak" className="block">
+          <Link href="/admin/dashboard/kontak" className="block">
             ☎ Kontak
           </Link>
 
