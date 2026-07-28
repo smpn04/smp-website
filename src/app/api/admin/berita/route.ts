@@ -8,10 +8,11 @@ export async function POST(req: Request) {
     const news = await prisma.news.create({
       data: {
         title: body.title,
-        date: body.date,
-        image: body.image,
-        excerpt: body.excerpt,
-        content: body.content,
+        // PERBAIKAN: Ubah string tanggal menjadi objek Date
+        date: body.date ? new Date(body.date) : new Date(),
+        image: body.image || null,
+        excerpt: body.excerpt || null,
+        content: body.content || null,
         published: false, // Selalu simpan sebagai Draft
       },
     });
