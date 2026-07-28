@@ -3,46 +3,53 @@
 import { useEffect, useState } from "react";
 
 export default function LatestNews() {
-  const [beritaList, setBeritaList] = useState<any[]>([]);
+  const [newsList, setNewsList] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Ambil semua kemungkinan data dari localStorage admin
-    const saved =
-      localStorage.getItem("beritaSekolah") ||
-      localStorage.getItem("berita") ||
-      localStorage.getItem("newsData");
-
-    if (saved) {
+    async function fetchNewsFromDatabase() {
       try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setBeritaList(parsed);
+        const res = await fetch("/api/admin/berita");
+        if (res.ok) {
+          const result = await res.json();
+          // Menangani jika response berupa { success: true, data: [...] } atau array langsung
+          const data = result.data || result;
+          if (Array.isArray(data)) {
+            // Hanya ambil berita yang statusnya sudah PUBLISHED
+            const publishedOnly = data.filter((item) => item.published === true);
+            setNewsList(publishedOnly);
+          }
         }
-      } catch (e) {
-        console.error("Gagal membaca berita:", e);
+      } catch (err) {
+        console.error("Gagal mengambil data berita dari database:", err);
+      } finally {
+        setLoading(false);
       }
     }
+
+    fetchNewsFromDatabase();
   }, []);
 
-  // Jika belum ada data dari admin, tampilkan contoh berita bawaan dengan gambar Unsplash
+  // Data Fallback jika database belum ada berita yang di-publish
   const defaultBerita = [
     {
       id: 1,
-      judul: "Kegiatan MPLS Tahun Ajaran Baru",
-      tanggal: "2026-07-13",
-      gambar: "https://images.unsplash.com/photo-1577896851231-70ef18881754?w=600&auto=format&fit=crop&q=60",
-      ringkasan: "Pelaksanaan Masa Pengenalan Lingkungan Sekolah UPT SMPN 4 Duampanua.",
+      title: "Kegiatan MPLS Tahun Ajaran Baru",
+      date: "2026-07-13",
+      image: "https://images.unsplash.com/photo-1577896851231-70ef18881754?w=600&auto=format&fit=crop&q=60",
+      excerpt: "Pelaksanaan Masa Pengenalan Lingkungan Sekolah UPT SMPN 4 Duampanua.",
     },
     {
       id: 2,
-      judul: "Pelayanan Public dan Administrasi Sekolah",
-      tanggal: "2026-06-27",
-      gambar: "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=600&auto=format&fit=crop&q=60",
-      ringkasan: "Peningkatan kualitas layanan administrasi dan informasi publik sekolah.",
+      title: "Pelayanan Public dan Administrasi Sekolah",
+      date: "2026-06-27",
+      image: "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=600&auto=format&fit=crop&q=60",
+      excerpt: "Peningkatan kualitas layanan administrasi dan informasi publik sekolah.",
     },
   ];
 
-  const displayData = beritaList.length > 0 ? beritaList : defaultBerita;
+  // Gunakan data dari Prisma jika ada, jika belum ada tampilkan default
+  const displayData = newsList.length > 0 ? newsList : defaultBerita;
 
   return (
     <section className="py-16 bg-slate-50">
@@ -54,60 +61,64 @@ export default function LatestNews() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {displayData.slice(0, 3).map((item, index) => {
-            // Mengecek semua variasi nama properti foto yang mungkin digunakan admin
-            const imgSrc =
-              item.foto ||
-              item.gambar ||
-              item.image ||
-              item.imageUrl ||
-              item.cover;
+        {loading ? (
+          <div className="text-center py-12 text-slate-400 text-sm">
+            Memuat berita terbaru...
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {displayData.slice(0, 3).map((item, index) => {
+              const imgSrc =
+                item.image ||
+                item.foto ||
+                item.gambar ||
+                item.imageUrl;
 
-            return (
-              <div
-                key={item.id || index}
-                className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col justify-between hover:shadow-md transition"
-              >
-                <div>
-                  <div className="h-52 w-full bg-slate-200 overflow-hidden">
-                    {imgSrc ? (
-                      <img
-                        src={imgSrc}
-                        alt={item.judul || item.title}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <div className="h-full w-full flex items-center justify-center text-slate-400 text-sm font-semibold">
-                        📷 Foto Berita
-                      </div>
-                    )}
+              return (
+                <div
+                  key={item.id || index}
+                  className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col justify-between hover:shadow-md transition"
+                >
+                  <div>
+                    <div className="h-52 w-full bg-slate-200 overflow-hidden relative">
+                      {imgSrc && imgSrc.trim() !== "" ? (
+                        <img
+                          src={imgSrc}
+                          alt={item.title || item.judul}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="h-full w-full flex items-center justify-center text-slate-400 text-sm font-semibold">
+                          📷 Foto Berita
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="p-6">
+                      <span className="text-xs font-semibold text-slate-400">
+                        {item.date || item.tanggal}
+                      </span>
+                      <h3 className="mt-2 text-lg font-bold text-slate-800 leading-snug">
+                        {item.title || item.judul}
+                      </h3>
+                      {(item.excerpt || item.content || item.ringkasan) && (
+                        <p className="mt-2 text-xs text-slate-600 line-clamp-2">
+                          {item.excerpt || item.content || item.ringkasan}
+                        </p>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="p-6">
-                    <span className="text-xs font-semibold text-slate-400">
-                      {item.tanggal || item.date}
-                    </span>
-                    <h3 className="mt-2 text-lg font-bold text-slate-800 leading-snug">
-                      {item.judul || item.title}
-                    </h3>
-                    {(item.ringkasan || item.konten || item.deskripsi) && (
-                      <p className="mt-2 text-xs text-slate-600 line-clamp-2">
-                        {item.ringkasan || item.konten || item.deskripsi}
-                      </p>
-                    )}
+                  <div className="p-6 pt-0">
+                    <button className="rounded-lg bg-blue-900 px-4 py-2 text-xs font-bold text-white hover:bg-blue-800 transition">
+                      Baca Selengkapnya
+                    </button>
                   </div>
                 </div>
-
-                <div className="p-6 pt-0">
-                  <button className="rounded-lg bg-blue-900 px-4 py-2 text-xs font-bold text-white hover:bg-blue-800 transition">
-                    Baca Selengkapnya
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </section>
   );
