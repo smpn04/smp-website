@@ -1,91 +1,129 @@
-import Link from "next/link";
+"use client";
 
-// Memaksa Next.js selalu mengambil data paling segar dari database
-export const dynamic = "force-dynamic";
+import { useState } from "react";
 
 export default function AdminProfilPage() {
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    namaSekolah: "UPT SMP Negeri 4 Duampanua",
+    kepalaSekolah: "Nama Kepala Sekolah, S.Pd., M.Pd.",
+    sambutan: "Selamat datang di website resmi UPT SMP Negeri 4 Duampanua...",
+    visi: "Terwujudnya peserta didik yang berprestasi, berkarakter, unggul, dan berwawasan lingkungan.",
+    misi: "1. Menyelenggarakan pembelajaran yang berkualitas.\n2. Membentuk karakter siswa yang religius dan berbudi pekerti luhur.",
+  });
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    // Simulated API Call
+    setTimeout(() => {
+      setLoading(false);
+      alert("Data profil berhasil diperbarui!");
+    }, 1000);
+  };
+
   return (
-    <div className="flex min-h-screen bg-gray-100">
-      {/* Sidebar Navigasi */}
-      <aside className="w-64 bg-blue-900 p-6 text-white">
-        <h1 className="mb-10 text-2xl font-bold">Admin SMP</h1>
-        <nav className="space-y-4">
-          <Link href="/admin/dashboard" className="block hover:text-blue-200">
-            🏠 Dashboard
-          </Link>
-          <Link href="/admin/dashboard/profil" className="block font-bold text-blue-300">
-            📄 Profil
-          </Link>
-          <Link href="/admin/dashboard/guru" className="block hover:text-blue-200">
-            👨‍🏫 Guru
-          </Link>
-          <Link href="/admin/dashboard/berita" className="block hover:text-blue-200">
-            📰 Berita
-          </Link>
-        </nav>
-      </aside>
+    <div className="max-w-4xl space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold text-gray-800">Kelola Profil Sekolah</h1>
+        <p className="text-sm text-gray-500">
+          Ubah informasi umum, visi, misi, dan sambutan kepala sekolah.
+        </p>
+      </div>
 
-      {/* Konten Utama Admin Profil */}
-      <main className="flex-1 p-10">
-        <div className="flex items-center justify-between border-b pb-4">
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-6 rounded-xl bg-white p-6 shadow-sm border border-gray-100"
+      >
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800">Kelola Profil Sekolah</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              Ubah informasi Visi, Misi, dan Sambutan Kepala Sekolah yang tampil di halaman depan.
-            </p>
-          </div>
-        </div>
-
-        {/* Form Pengaturan Profil */}
-        <form className="mt-8 max-w-4xl space-y-6 rounded-2xl bg-white p-8 shadow-sm">
-          <div>
-            <label className="block text-sm font-semibold text-gray-700">
-              Sambutan Kepala Sekolah
+            <label className="block text-sm font-medium text-gray-700">
+              Nama Sekolah
             </label>
-            <textarea
-              rows={4}
-              className="mt-2 w-full rounded-lg border border-gray-300 p-3 focus:border-blue-500 focus:outline-none"
-              placeholder="Tuliskan sambutan kepala sekolah di sini..."
-              defaultValue="Selamat datang di UPT SMP Negeri 4 Duampanua..."
+            <input
+              type="text"
+              name="namaSekolah"
+              value={formData.namaSekolah}
+              onChange={handleChange}
+              className="mt-1 w-full rounded-lg border border-gray-300 p-2.5 text-sm focus:border-blue-500 focus:outline-none"
+              required
             />
           </div>
 
-          <div className="grid gap-6 sm:grid-cols-2">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700">
-                Visi Sekolah
-              </label>
-              <textarea
-                rows={5}
-                className="mt-2 w-full rounded-lg border border-gray-300 p-3 focus:border-blue-500 focus:outline-none"
-                placeholder="Tuliskan visi sekolah..."
-                defaultValue="Terwujudnya peserta didik yang bertakwa, berprestasi, dan berbudaya lingkungan."
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700">
-                Misi Sekolah
-              </label>
-              <textarea
-                rows={5}
-                className="mt-2 w-full rounded-lg border border-gray-300 p-3 focus:border-blue-500 focus:outline-none"
-                placeholder="Tuliskan misi sekolah..."
-                defaultValue="1. Menyelenggarakan pembelajaran berkualitas.&#10;2. Mengembangkan potensi bakat siswa."
-              />
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Nama Kepala Sekolah
+            </label>
+            <input
+              type="text"
+              name="kepalaSekolah"
+              value={formData.kepalaSekolah}
+              onChange={handleChange}
+              className="mt-1 w-full rounded-lg border border-gray-300 p-2.5 text-sm focus:border-blue-500 focus:outline-none"
+              required
+            />
           </div>
+        </div>
 
-          <div className="flex justify-end pt-4">
-            <button
-              type="button"
-              className="rounded-lg bg-blue-900 px-6 py-2.5 font-medium text-white shadow hover:bg-blue-800 focus:outline-none"
-            >
-              Simpan Perubahan
-            </button>
-          </div>
-        </form>
-      </main>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            Sambutan Kepala Sekolah
+          </label>
+          <textarea
+            name="sambutan"
+            rows={4}
+            value={formData.sambutan}
+            onChange={handleChange}
+            className="mt-1 w-full rounded-lg border border-gray-300 p-2.5 text-sm focus:border-blue-500 focus:outline-none"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            Visi Sekolah
+          </label>
+          <textarea
+            name="visi"
+            rows={3}
+            value={formData.visi}
+            onChange={handleChange}
+            className="mt-1 w-full rounded-lg border border-gray-300 p-2.5 text-sm focus:border-blue-500 focus:outline-none"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            Misi Sekolah
+          </label>
+          <textarea
+            name="misi"
+            rows={4}
+            value={formData.misi}
+            onChange={handleChange}
+            className="mt-1 w-full rounded-lg border border-gray-300 p-2.5 text-sm focus:border-blue-500 focus:outline-none"
+          />
+        </div>
+
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            disabled={loading}
+            className="rounded-lg bg-blue-900 px-6 py-2.5 text-sm font-medium text-white hover:bg-blue-800 disabled:opacity-50"
+          >
+            {loading ? "Menyimpan..." : "Simpan Perubahan"}
+          </button>
+        </div>
+      </form>
     </div>
   );
 }
