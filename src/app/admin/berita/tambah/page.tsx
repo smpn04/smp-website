@@ -16,7 +16,7 @@ export default function TambahBeritaPage() {
   const [image, setImage] = useState("");
   const [fileName, setFileName] = useState("");
 
-  // Mengubah Gambar ke Base64 Terkompresi (< 100KB)
+  // BACA FILE LANGSUNG DI BROWSER DENGAN BASE64 (TANPA CALL API /api/upload VERCEL BLOB)
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -38,7 +38,7 @@ export default function TambahBeritaPage() {
 
       img.onload = () => {
         const canvas = document.createElement("canvas");
-        const MAX_WIDTH = 800; // Kompres resolusi agar ringan
+        const MAX_WIDTH = 800; // Kompres ukuran gambar
 
         let width = img.width;
         let height = img.height;
@@ -54,7 +54,7 @@ export default function TambahBeritaPage() {
         const ctx = canvas.getContext("2d");
         if (ctx) {
           ctx.drawImage(img, 0, 0, width, height);
-          // Kompresi JPEG Kualitas 60%
+          // Kompresi JPEG Kualitas 60% (Sangat kecil & aman untuk PostgreSQL)
           const compressedBase64 = canvas.toDataURL("image/jpeg", 0.6);
           setImage(compressedBase64);
         } else {
@@ -70,7 +70,7 @@ export default function TambahBeritaPage() {
     };
 
     reader.onerror = () => {
-      alert("Gagal membaca file foto.");
+      alert("Gagal membaca file foto dari HP/Komputer.");
       setIsProcessing(false);
     };
 
@@ -103,7 +103,7 @@ export default function TambahBeritaPage() {
           date,
           excerpt,
           content,
-          image, // String Base64 langsung dikirim
+          image, // Mengirimkan string Base64 terkompresi
           published: false,
         }),
       });
