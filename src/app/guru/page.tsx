@@ -3,6 +3,9 @@ import Footer from "@/components/layout/Footer";
 import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 
+// Memaksa Next.js selalu mengambil data paling baru dari database setiap kali halaman dibuka
+export const dynamic = "force-dynamic";
+
 export default async function GuruPage() {
   const teachers = await prisma.teacher.findMany({
     orderBy: {

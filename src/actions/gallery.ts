@@ -2,9 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
-import fs from "fs/promises";
-import path from "path";
-import { v4 as uuid } from "uuid";
+import { put } from "@vercel/blob";
 
 export async function createGallery(formData: FormData) {
   const title = formData.get("title")?.toString().trim() || "";
@@ -13,17 +11,12 @@ export async function createGallery(formData: FormData) {
   let imagePath = "/gallery/default.jpg";
 
   if (image && image.size > 0) {
-    const bytes = await image.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    const blob = await put(image.name, image, {
+      access: "public",
+      addRandomSuffix: true,
+    });
 
-    const fileName = `${uuid()}-${image.name}`;
-
-    await fs.writeFile(
-      path.join(process.cwd(), "public", "gallery", fileName),
-      buffer
-    );
-
-    imagePath = `/gallery/${fileName}`;
+    imagePath = blob.url;
   }
 
   await prisma.gallery.create({
@@ -41,27 +34,26 @@ export async function updateGallery(formData: FormData) {
   const title = formData.get("title")?.toString().trim() || "";
   const image = formData.get("image") as File;
 
-  let data: {
+  const data: {
     title: string;
     image?: string;
-  } = { title };
+  } = {
+    title,
+  };
 
   if (image && image.size > 0) {
-    const bytes = await image.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    const blob = await put(image.name, image, {
+      access: "public",
+      addRandomSuffix: true,
+    });
 
-    const fileName = `${uuid()}-${image.name}`;
-
-    await fs.writeFile(
-      path.join(process.cwd(), "public", "gallery", fileName),
-      buffer
-    );
-
-    data.image = `/gallery/${fileName}`;
+    data.image = blob.url;
   }
 
   await prisma.gallery.update({
-    where: { id },
+    where: {
+      id,
+    },
     data,
   });
 
@@ -72,7 +64,9 @@ export async function deleteGallery(formData: FormData) {
   const id = Number(formData.get("id"));
 
   await prisma.gallery.delete({
-    where: { id },
+    where: {
+      id,
+    },
   });
 
   redirect("/admin/gallery");
