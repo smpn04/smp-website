@@ -2,39 +2,11 @@
 
 import { useEffect, useState } from "react";
 
-interface Berita {
-  id?: number | string;
-  judul: string;
-  tanggal: string;
-  foto?: string;
-  gambar?: string;
-  ringkasan?: string;
-  konten?: string;
-  status?: string;
-}
-
-const initialBerita: Berita[] = [
-  {
-    id: 1,
-    judul: "Kegiatan MPLS Tahun Ajaran Baru",
-    tanggal: "2026-07-13",
-    ringkasan: "Pelaksanaan Masa Pengenalan Lingkungan Sekolah UPT SMPN 4 Duampanua.",
-    status: "Publish",
-  },
-  {
-    id: 2,
-    judul: "Pelayanan Public dan Administrasi Sekolah",
-    tanggal: "2026-06-27",
-    ringkasan: "Peningkatan kualitas layanan administrasi dan informasi publik sekolah.",
-    status: "Publish",
-  },
-];
-
 export default function LatestNews() {
-  const [beritaList, setBeritaList] = useState<Berita[]>(initialBerita);
+  const [beritaList, setBeritaList] = useState<any[]>([]);
 
   useEffect(() => {
-    // Cari data di localStorage dari berbagai kemungkinan key admin
+    // Ambil semua kemungkinan data dari localStorage admin
     const saved =
       localStorage.getItem("beritaSekolah") ||
       localStorage.getItem("berita") ||
@@ -42,21 +14,35 @@ export default function LatestNews() {
 
     if (saved) {
       try {
-        const parsed: Berita[] = JSON.parse(saved);
+        const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          const published = parsed.filter(
-            (item) =>
-              !item.status ||
-              item.status === "Publish" ||
-              item.status === "publish"
-          );
-          setBeritaList(published.length > 0 ? published : parsed);
+          setBeritaList(parsed);
         }
-      } catch (error) {
-        console.error("Error parsing berita:", error);
+      } catch (e) {
+        console.error("Gagal membaca berita:", e);
       }
     }
   }, []);
+
+  // Jika belum ada data dari admin, tampilkan contoh berita bawaan dengan gambar Unsplash
+  const defaultBerita = [
+    {
+      id: 1,
+      judul: "Kegiatan MPLS Tahun Ajaran Baru",
+      tanggal: "2026-07-13",
+      gambar: "https://images.unsplash.com/photo-1577896851231-70ef18881754?w=600&auto=format&fit=crop&q=60",
+      ringkasan: "Pelaksanaan Masa Pengenalan Lingkungan Sekolah UPT SMPN 4 Duampanua.",
+    },
+    {
+      id: 2,
+      judul: "Pelayanan Public dan Administrasi Sekolah",
+      tanggal: "2026-06-27",
+      gambar: "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=600&auto=format&fit=crop&q=60",
+      ringkasan: "Peningkatan kualitas layanan administrasi dan informasi publik sekolah.",
+    },
+  ];
+
+  const displayData = beritaList.length > 0 ? beritaList : defaultBerita;
 
   return (
     <section className="py-16 bg-slate-50">
@@ -69,23 +55,30 @@ export default function LatestNews() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {beritaList.slice(0, 3).map((item, index) => {
-            const imageSrc = item.foto || item.gambar;
+          {displayData.slice(0, 3).map((item, index) => {
+            // Mengecek semua variasi nama properti foto yang mungkin digunakan admin
+            const imgSrc =
+              item.foto ||
+              item.gambar ||
+              item.image ||
+              item.imageUrl ||
+              item.cover;
+
             return (
               <div
                 key={item.id || index}
                 className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col justify-between hover:shadow-md transition"
               >
                 <div>
-                  <div className="h-52 w-full bg-slate-200 flex items-center justify-center overflow-hidden">
-                    {imageSrc ? (
+                  <div className="h-52 w-full bg-slate-200 overflow-hidden">
+                    {imgSrc ? (
                       <img
-                        src={imageSrc}
-                        alt={item.judul}
+                        src={imgSrc}
+                        alt={item.judul || item.title}
                         className="h-full w-full object-cover"
                       />
                     ) : (
-                      <div className="text-slate-400 text-sm font-semibold">
+                      <div className="h-full w-full flex items-center justify-center text-slate-400 text-sm font-semibold">
                         📷 Foto Berita
                       </div>
                     )}
@@ -93,14 +86,14 @@ export default function LatestNews() {
 
                   <div className="p-6">
                     <span className="text-xs font-semibold text-slate-400">
-                      {item.tanggal}
+                      {item.tanggal || item.date}
                     </span>
                     <h3 className="mt-2 text-lg font-bold text-slate-800 leading-snug">
-                      {item.judul}
+                      {item.judul || item.title}
                     </h3>
-                    {(item.ringkasan || item.konten) && (
+                    {(item.ringkasan || item.konten || item.deskripsi) && (
                       <p className="mt-2 text-xs text-slate-600 line-clamp-2">
-                        {item.ringkasan || item.konten}
+                        {item.ringkasan || item.konten || item.deskripsi}
                       </p>
                     )}
                   </div>

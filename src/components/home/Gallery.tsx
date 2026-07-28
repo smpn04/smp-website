@@ -2,16 +2,8 @@
 
 import { useEffect, useState } from "react";
 
-interface ItemGaleri {
-  id?: number | string;
-  judul?: string;
-  foto?: string;
-  gambar?: string;
-  url?: string;
-}
-
 export default function Gallery() {
-  const [galeriList, setGaleriList] = useState<ItemGaleri[]>([]);
+  const [galeriList, setGaleriList] = useState<any[]>([]);
 
   useEffect(() => {
     const saved =
@@ -22,14 +14,25 @@ export default function Gallery() {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
+        if (Array.isArray(parsed) && parsed.length > 0) {
           setGaleriList(parsed);
         }
       } catch (e) {
-        console.error("Error parsing galeri:", e);
+        console.error("Gagal membaca galeri:", e);
       }
     }
   }, []);
+
+  const defaultGaleri = [
+    { id: 1, gambar: "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=600&auto=format&fit=crop&q=60", judul: "Kegiatan Belajar" },
+    { id: 2, gambar: "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=600&auto=format&fit=crop&q=60", judul: "Ruang Kelas" },
+    { id: 3, gambar: "https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=600&auto=format&fit=crop&q=60", judul: "Upacara Bendera" },
+    { id: 4, gambar: "https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=600&auto=format&fit=crop&q=60", judul: "Ekstrakurikuler" },
+    { id: 5, gambar: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=600&auto=format&fit=crop&q=60", judul: "Fasilitas Perpustakaan" },
+    { id: 6, gambar: "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=600&auto=format&fit=crop&q=60", judul: "Olahraga" },
+  ];
+
+  const displayGaleri = galeriList.length > 0 ? galeriList : defaultGaleri;
 
   return (
     <section className="py-16 bg-white">
@@ -41,50 +44,39 @@ export default function Gallery() {
           </p>
         </div>
 
-        {galeriList.length === 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          {displayGaleri.map((item, index) => {
+            const imgSrc =
+              item.foto ||
+              item.gambar ||
+              item.url ||
+              item.imageUrl;
+
+            return (
               <div
-                key={i}
-                className="h-56 rounded-2xl bg-slate-100 border-2 border-dashed border-slate-300 flex flex-col items-center justify-center p-4 text-center"
+                key={item.id || index}
+                className="h-56 rounded-2xl overflow-hidden shadow-sm border border-slate-200 group relative bg-slate-100"
               >
-                <span className="text-3xl mb-2">🖼️</span>
-                <span className="text-xs text-slate-400 font-medium">
-                  Foto Galeri #{i} (Kelola di Admin Galeri)
-                </span>
+                {imgSrc ? (
+                  <img
+                    src={imgSrc}
+                    alt={item.judul || `Galeri ${index + 1}`}
+                    className="h-full w-full object-cover group-hover:scale-105 transition duration-300"
+                  />
+                ) : (
+                  <div className="h-full w-full flex items-center justify-center text-slate-400 text-xs">
+                    Foto Tidak Tersedia
+                  </div>
+                )}
+                {item.judul && (
+                  <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent p-4 text-white text-xs font-semibold">
+                    {item.judul}
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            {galeriList.map((item, index) => {
-              const imageSrc = item.foto || item.gambar || item.url;
-              return (
-                <div
-                  key={item.id || index}
-                  className="h-56 rounded-2xl overflow-hidden shadow-sm border border-slate-200 group relative"
-                >
-                  {imageSrc ? (
-                    <img
-                      src={imageSrc}
-                      alt={item.judul || `Galeri ${index + 1}`}
-                      className="h-full w-full object-cover group-hover:scale-105 transition duration-300"
-                    />
-                  ) : (
-                    <div className="h-full w-full bg-slate-100 flex items-center justify-center text-slate-400 text-xs">
-                      Foto Tidak Tersedia
-                    </div>
-                  )}
-                  {item.judul && (
-                    <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent p-4 text-white text-xs font-semibold">
-                      {item.judul}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
+            );
+          })}
+        </div>
       </div>
     </section>
   );
