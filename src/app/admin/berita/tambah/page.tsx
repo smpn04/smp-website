@@ -7,74 +7,43 @@ import Link from "next/link";
 export default function TambahBeritaPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   const [title, setTitle] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [excerpt, setExcerpt] = useState("");
   const [content, setContent] = useState("");
   const [image, setImage] = useState("");
-  const [fileName, setFileName] = useState("");
 
-  // BACA FILE LANGSUNG DI BROWSER DENGAN BASE64 (TANPA CALL API /api/upload VERCEL BLOB)
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Upload langsung ke Vercel Blob via API /api/upload
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setFileName(file.name);
-    setIsProcessing(true);
+    setUploading(true);
+    setImage(""); // Reset
 
-    const reader = new FileReader();
+    const formData = new FormData();
+    formData.append("file", file);
 
-    reader.onload = (event) => {
-      const rawBase64 = event.target?.result as string;
-      if (!rawBase64) {
-        setIsProcessing(false);
-        return;
+    try {
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const result = await res.json();
+
+      if (res.ok && result.success && result.url) {
+        setImage(result.url); // Menyimpan URL resmi dari Vercel Blob
+      } else {
+        alert(`Gagal unggah foto: ${result.message || "Terjadi kesalahan"}`);
       }
-
-      const img = new Image();
-      img.src = rawBase64;
-
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        const MAX_WIDTH = 800; // Kompres ukuran gambar
-
-        let width = img.width;
-        let height = img.height;
-
-        if (width > MAX_WIDTH) {
-          height = Math.round((height * MAX_WIDTH) / width);
-          width = MAX_WIDTH;
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-
-        const ctx = canvas.getContext("2d");
-        if (ctx) {
-          ctx.drawImage(img, 0, 0, width, height);
-          // Kompresi JPEG Kualitas 60% (Sangat kecil & aman untuk PostgreSQL)
-          const compressedBase64 = canvas.toDataURL("image/jpeg", 0.6);
-          setImage(compressedBase64);
-        } else {
-          setImage(rawBase64);
-        }
-        setIsProcessing(false);
-      };
-
-      img.onerror = () => {
-        setImage(rawBase64);
-        setIsProcessing(false);
-      };
-    };
-
-    reader.onerror = () => {
-      alert("Gagal membaca file foto dari HP/Komputer.");
-      setIsProcessing(false);
-    };
-
-    reader.readAsDataURL(file);
+    } catch (error: any) {
+      alert(`Error upload foto: ${error.message}`);
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -85,8 +54,8 @@ export default function TambahBeritaPage() {
       return;
     }
 
-    if (isProcessing) {
-      alert("Foto sedang diproses, tunggu sebentar...");
+    if (uploading) {
+      alert("Foto sedang dalam proses upload, tunggu sebentar...");
       return;
     }
 
@@ -103,7 +72,7 @@ export default function TambahBeritaPage() {
           date,
           excerpt,
           content,
-          image, // Mengirimkan string Base64 terkompresi
+          image, // URL dari Vercel Blob dikirim ke Prisma
           published: false,
         }),
       });
@@ -111,7 +80,7 @@ export default function TambahBeritaPage() {
       const result = await res.json();
 
       if (res.ok && result.success) {
-        alert("Berita & Foto Berhasil Disimpan!");
+        alert("Berita Berhasil Disimpan!");
         router.push("/admin/berita");
         router.refresh();
       } else {
@@ -175,12 +144,12 @@ export default function TambahBeritaPage() {
               onChange={handleFileSelect}
               className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />
-            {isProcessing && (
-              <p className="text-xs text-blue-600 mt-1 font-medium">
-                ⏳ Memproses foto...
+            {uploading && (
+              <p className="text-xs text-blue-600 mt-1 font-medium animate-pulse">
+                ⏳ Mengunggah foto ke server...
               </p>
             )}
-            {fileName && !isProcessing && image && (
+            {image && !uploading && (
               <p className="text-xs text-green-600 mt-1 font-medium">
                 ✓ Foto Siap Disimpan!
               </p>
@@ -188,7 +157,7 @@ export default function TambahBeritaPage() {
           </div>
         </div>
 
-        {image && !isProcessing && (
+        {image && !uploading && (
           <div>
             <p className="text-xs text-gray-500 mb-1">Preview Foto:</p>
             <img
@@ -227,10 +196,10 @@ export default function TambahBeritaPage() {
 
         <button
           type="submit"
-          disabled={loading || isProcessing}
+          disabled={loading || uploading}
           className="rounded-lg bg-blue-900 px-6 py-3 text-sm font-bold text-white hover:bg-blue-800 disabled:opacity-50 transition"
         >
-          {loading ? "Menyimpan Berita..." : isProcessing ? "Memproses Foto..." : "Simpan Berita"}
+          {loading ? "Menyimpan Berita..." : uploading ? "Mengunggah Foto..." : "Simpan Berita"}
         </button>
       </form>
     </div>
