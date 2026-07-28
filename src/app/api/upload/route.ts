@@ -30,6 +30,7 @@ export async function POST(req: NextRequest) {
       {
         access: "public",
         token: process.env.BLOB_READ_WRITE_TOKEN,
+        addRandomSuffix: true, // <-- TAMBAHKAN BARIS INI
       }
     );
 
