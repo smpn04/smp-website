@@ -43,7 +43,8 @@ export default function AdminBeritaPage() {
     const newStatus = !item.published;
 
     try {
-      const res = await fetch(`/api/admin/berita/${item.id}`, {
+      // 👈 Diperbaiki ke endpoint /publish/
+      const res = await fetch(`/api/admin/berita/publish/${item.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ published: newStatus }),
@@ -54,7 +55,8 @@ export default function AdminBeritaPage() {
           prev.map((n) => (n.id === item.id ? { ...n, published: newStatus } : n))
         );
       } else {
-        alert("Gagal mengubah status berita!");
+        const errData = await res.json().catch(() => ({}));
+        alert(`Gagal mengubah status: ${errData.message || "Terjadi kesalahan server"}`);
       }
     } catch (error) {
       console.error(error);
