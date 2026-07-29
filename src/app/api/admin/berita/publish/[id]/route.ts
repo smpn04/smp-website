@@ -16,16 +16,16 @@ export async function PATCH(
       );
     }
 
-    // Ambil data request body (jika dikirim)
+    // Ambil data request body
     let publishedStatus: boolean | undefined;
     try {
       const body = await req.json();
       publishedStatus = body.published;
     } catch {
-      // Jika body kosong, toggle status berita yang ada di DB secara otomatis
+      // Body kosong
     }
 
-    // Jika status tidak dikirim lewat body, kita cari status saat ini lalu balikkan (toggle)
+    // Jika status tidak dikirim, ambil status berita saat ini lalu toggle
     if (typeof publishedStatus !== "boolean") {
       const currentNews = await prisma.news.findUnique({
         where: { id: newsId },
@@ -34,14 +34,14 @@ export async function PATCH(
 
       if (!currentNews) {
         return NextResponse.json(
-          { success: false, message: "Berita tidak ditemukan" },
+          { success: false, message: "Berita tidak ditemukan di database" },
           { status: 404 }
         );
       }
       publishedStatus = !currentNews.published;
     }
 
-    // Update status di database NeonDB
+    // 👈 DI SINI PERBAIKANNYA: Pakai prisma.news, BUKAN prisma.gallery
     const updatedNews = await prisma.news.update({
       where: { id: newsId },
       data: {
