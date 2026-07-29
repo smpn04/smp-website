@@ -1,26 +1,48 @@
+// 1. GENERATOR PRISMA CLIENT
+generator client {
+  provider = "prisma-client-js"
+}
+
+// 2. DATASOURCE DATABASE
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 3. MODEL ADMIN (PENTING: Agar tabel Admin & data login tidak terhapus!)
+model Admin {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String
+  createdAt DateTime @default(now())
+}
+
+// 4. MODEL NEWS
 model News {
   id        Int      @id @default(autoincrement())
   title     String
   date      String
-  image     String   @db.Text // <-- TAMBAHKAN @db.Text DI SINI
+  image     String?  // Opsional untuk URL Vercel Blob
   excerpt   String
-  content   String
+  content   String   @db.Text
   published Boolean  @default(false)
   createdAt DateTime @default(now())
 }
 
+// 5. MODEL TEACHER
 model Teacher {
   id        Int      @id @default(autoincrement())
   name      String
   position  String
-  photo     String   @db.Text // <-- TAMBAHKAN JUGA
+  photo     String?  // Opsional untuk URL Vercel Blob
   createdAt DateTime @default(now())
 }
 
+// 6. MODEL GALLERY
 model Gallery {
   id        Int      @id @default(autoincrement())
   title     String
-  image     String   @db.Text // <-- TAMBAHKAN JUGA
+  image     String?  // Opsional untuk URL Vercel Blob
   published Boolean  @default(false)
   createdAt DateTime @default(now())
 }

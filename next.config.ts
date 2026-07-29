@@ -11,7 +11,15 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "*.public.blob.vercel-storage.com",
+        hostname: "**.public.blob.vercel-storage.com", // 👈 Menggunakan ** agar mencakup semua sub-subdomain
+        port: "",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "public.blob.vercel-storage.com",
+        port: "",
+        pathname: "/**",
       },
     ],
   },

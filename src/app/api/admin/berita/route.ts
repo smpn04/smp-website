@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma"; // sesuaikan path ke prisma client kamu
+import { prisma } from "@/lib/prisma";
 
 export async function POST(request: Request) {
   try {
@@ -13,12 +13,12 @@ export async function POST(request: Request) {
       );
     }
 
-    // PANGGUL prisma.news (sesuai nama model di schema.prisma)
+    // PANGGIL prisma.news (Menyimpan URL resmi dari Vercel Blob)
     const newNews = await prisma.news.create({
       data: {
         title,
         date: date || new Date().toISOString().split("T")[0],
-        image: image || "", // Menyimpan string Base64 ke kolom @db.Text
+        image: image || null, // 👈 Simpan URL Vercel Blob (bukan Base64)
         excerpt: excerpt || "",
         content: content || "",
         published: published ?? false,

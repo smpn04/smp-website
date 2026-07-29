@@ -13,23 +13,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Ambil ekstensi & buat nama file aman
+    // Ambil ekstensi & bersihkan nama file
     const ext = file.name.split(".").pop() || "jpg";
     const cleanName = file.name
-      .replace(/\.[^/.]+$/, "") // hapus ekstensi lama
-      .replace(/[^a-zA-Z0-9]/g, "-"); // bersihkan karakter aneh/spasi
+      .replace(/\.[^/.]+$/, "")
+      .replace(/[^a-zA-Z0-9]/g, "-");
 
-    // Buat path unik dengan Timestamp
-    const pathname = `berita/${Date.now()}-${cleanName}.${ext}`;
+    const filename = `berita/${Date.now()}-${cleanName}.${ext}`;
 
-    // Jalankan Vercel Blob PUT tanpa bentrokan opsi
-    const blob = await put(pathname, file, {
+    // Oper token secara eksplisit agar aman di localhost maupun production
+    const blob = await put(filename, file, {
       access: "public",
-      token: process.env.BLOB_READ_WRITE_TOKEN,
-      addRandomSuffix: true, // Vercel akan otomatis menambahkan akhiran unik
+      addRandomSuffix: true,
+      token: process.env.BLOB_READ_WRITE_TOKEN, // 👈 TAMBAHAN WAJIB
     });
-
-    console.log("UPLOAD SUCCESS:", blob.url);
 
     return NextResponse.json({
       success: true,
@@ -38,7 +35,10 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error("UPLOAD ERROR:", error);
     return NextResponse.json(
-      { success: false, message: error.message || "Upload gagal." },
+      { 
+        success: false, 
+        message: error.message || "Upload gagal. Pastikan Storage Vercel Blob sudah terhubung." 
+      },
       { status: 500 }
     );
   }
