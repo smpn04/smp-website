@@ -11,16 +11,27 @@ export default function Statistics() {
   });
 
   useEffect(() => {
-    const savedData = localStorage.getItem("profilSekolah");
-    if (savedData) {
-      const parsed = JSON.parse(savedData);
-      setStats({
-        jumlahSiswa: parsed.jumlahSiswa || stats.jumlahSiswa,
-        jumlahGuru: parsed.jumlahGuru || stats.jumlahGuru,
-        jumlahKelas: parsed.jumlahKelas || stats.jumlahKelas,
-        jumlahPrestasi: parsed.jumlahPrestasi || stats.jumlahPrestasi,
-      });
+    // Ambil data langsung dari API Server agar konsisten di semua HP & Laptop
+    async function fetchProfil() {
+      try {
+        const res = await fetch("/api/admin/profil", { cache: "no-store" });
+        if (res.ok) {
+          const result = await res.json();
+          const data = result.data || result;
+          
+          setStats({
+            jumlahSiswa: data.jumlahSiswa || "350+",
+            jumlahGuru: data.jumlahGuru || "25+",
+            jumlahKelas: data.jumlahKelas || "12",
+            jumlahPrestasi: data.jumlahPrestasi || "45+",
+          });
+        }
+      } catch (error) {
+        console.error("Gagal mengambil data statistik:", error);
+      }
     }
+
+    fetchProfil();
   }, []);
 
   const items = [
@@ -35,7 +46,10 @@ export default function Statistics() {
       <div className="mx-auto max-w-7xl px-6">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
           {items.map((item, index) => (
-            <div key={index} className="space-y-2 p-4 rounded-xl bg-blue-800/40 border border-blue-700/50">
+            <div
+              key={index}
+              className="space-y-2 p-4 rounded-xl bg-blue-800/40 border border-blue-700/50"
+            >
               <div className="text-4xl">{item.icon}</div>
               <div className="text-3xl md:text-4xl font-extrabold text-yellow-400">
                 {item.value}
