@@ -1,3 +1,6 @@
+export const revalidate = 0;
+export const dynamic = "force-dynamic";
+
 import Header from "../components/layout/Header";
 import Hero from "../components/home/Hero";
 import Statistics from "../components/home/Statistics";
