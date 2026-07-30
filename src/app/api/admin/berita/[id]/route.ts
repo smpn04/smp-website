@@ -4,23 +4,22 @@ import { prisma } from "@/lib/prisma";
 // Route handler untuk update status berita (PATCH)
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const resolvedParams = await params;
-    const rawId = resolvedParams.id;
+    const { id: rawId } = await context.params;
     const id = Number(rawId);
 
-    if (isNaN(id)) {
+    if (!id || isNaN(id)) {
       return NextResponse.json(
-        { success: false, message: "ID Berita harus berupa angka" },
+        { success: false, message: "ID Berita tidak valid / harus berupa angka" },
         { status: 400 }
       );
     }
 
     const body = await req.json();
 
-    // UPDATE MODEL NEWS (BERITA)
+    // Pastikan memanggil prisma.news
     const updatedNews = await prisma.news.update({
       where: { id },
       data: {
@@ -44,11 +43,18 @@ export async function PATCH(
 // Route handler untuk hapus berita (DELETE)
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const resolvedParams = await params;
-    const id = Number(resolvedParams.id);
+    const { id: rawId } = await context.params;
+    const id = Number(rawId);
+
+    if (!id || isNaN(id)) {
+      return NextResponse.json(
+        { success: false, message: "ID Berita tidak valid" },
+        { status: 400 }
+      );
+    }
 
     await prisma.news.delete({
       where: { id },
