@@ -18,20 +18,22 @@ export async function createNews(formData: FormData) {
 
   const bytes = await image.arrayBuffer();
   const buffer = Buffer.from(bytes);
-const fileName = `${uuid()}-${image.name}`;
-const filePath = path.join(
-  process.cwd(),
-  "public",
-  "uploads",
-  "news",
-  fileName
-);
-await fs.writeFile(filePath, buffer);
+  const fileName = `${uuid()}-${image.name}`;
+  const filePath = path.join(
+    process.cwd(),
+    "public",
+    "uploads",
+    "news",
+    fileName
+  );
+  await fs.writeFile(filePath, buffer);
+
   await prisma.news.create({
     data: {
       title,
       date,
-     image: `/uploads/news/${fileName}`,
+      // ⚠️ PERBAIKAN: Gunakan 'images' dan bungkus string dalam Array [...]
+      images: [`/uploads/news/${fileName}`],
       excerpt: content.substring(0, 100),
       content,
     },
