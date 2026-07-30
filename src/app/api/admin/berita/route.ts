@@ -1,39 +1,54 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function POST(request: Request) {
-  try {
-    const body = await request.json();
-    const { title, date, excerpt, content, image, published } = body;
+export const dynamic = "force-dynamic";
 
-    if (!title) {
+// GET: Ambil semua daftar berita
+export async function GET() {
+  try {
+    const newsList = await (prisma as any).news.findMany({
+      orderBy: {
+        createdAt: "desc", // Mengurutkan dari berita terbaru
+      },
+    });
+
+    return NextResponse.json({ success: true, data: newsList });
+  } catch (error: any) {
+    console.error("ERROR GET BERITA:", error);
+    return NextResponse.json(
+      { success: false, message: error?.message || "Gagal mengambil data berita" },
+      { status: 500 }
+    );
+  }
+}
+
+// POST: Tambah Berita Baru (OTOMATIS PUBLISHED = TRUE)
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json();
+
+    if (!body.title) {
       return NextResponse.json(
-        { success: false, message: "Judul berita wajib diisi" },
+        { success: false, message: "Judul berita wajib diisi!" },
         { status: 400 }
       );
     }
 
-    // PANGGIL prisma.news (Menyimpan URL resmi dari Vercel Blob)
-    const newNews = await prisma.news.create({
+    const newNews = await (prisma as any).news.create({
       data: {
-        title,
-        date: date || new Date().toISOString().split("T")[0],
-        image: image || null, // 👈 Simpan URL Vercel Blob (bukan Base64)
-        excerpt: excerpt || "",
-        content: content || "",
-        published: published ?? false,
+        title: body.title,
+        content: body.content || "",
+        date: body.date || new Date().toISOString().split("T")[0],
+        image: body.image || null,
+        published: true, // AUTO PUBLISH SECARA OTOMATIS!
       },
     });
 
-    return NextResponse.json({
-      success: true,
-      message: "Berita berhasil disimpan",
-      data: newNews,
-    });
+    return NextResponse.json({ success: true, data: newNews }, { status: 201 });
   } catch (error: any) {
-    console.error("Error creating news:", error);
+    console.error("ERROR POST BERITA:", error);
     return NextResponse.json(
-      { success: false, message: error.message || "Gagal menyimpan ke database" },
+      { success: false, message: error?.message || "Gagal menambah berita" },
       { status: 500 }
     );
   }

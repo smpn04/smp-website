@@ -8,7 +8,6 @@ interface NewsItem {
   title: string;
   date: string;
   image?: string | null;
-  published: boolean;
 }
 
 export default function AdminBeritaPage() {
@@ -36,38 +35,7 @@ export default function AdminBeritaPage() {
     fetchNews();
   }, []);
 
-  const handleTogglePublish = async (item: NewsItem) => {
-    if (!item?.id) {
-      alert("ID Berita tidak valid!");
-      return;
-    }
-
-    setActionLoading(item.id);
-    const newStatus = !item.published;
-
-    try {
-      const res = await fetch(`/api/admin/berita/${item.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ published: newStatus }),
-      });
-
-      const result = await res.json();
-
-      if (res.ok && result.success) {
-        setNewsList((prev) =>
-          prev.map((n) => (n.id === item.id ? { ...n, published: newStatus } : n))
-        );
-      } else {
-        alert(`GAGAL SERVER: ${result.message || "Terjadi kesalahan"}`);
-      }
-    } catch (error: any) {
-      alert(`GAGAL JARINGAN: ${error?.message || "Kesalahan koneksi"}`);
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
+  // Hapus Berita
   const handleDelete = async (id: number) => {
     if (!confirm("Apakah Anda yakin ingin menghapus berita ini?")) return;
 
@@ -84,7 +52,7 @@ export default function AdminBeritaPage() {
       }
     } catch (error) {
       console.error(error);
-      alert("Terjadi kesalahan!");
+      alert("Terjadi kesalahan jaringan!");
     } finally {
       setActionLoading(null);
     }
@@ -109,21 +77,20 @@ export default function AdminBeritaPage() {
               <th className="p-3 border-r border-gray-200 text-center w-12">No</th>
               <th className="p-3 border-r border-gray-200 text-center w-36">Foto</th>
               <th className="p-3 border-r border-gray-200">Judul</th>
-              <th className="p-3 border-r border-gray-200 w-32">Tanggal</th>
-              <th className="p-3 border-r border-gray-200 text-center w-32">Status</th>
-              <th className="p-3 text-center w-64">Aksi</th>
+              <th className="p-3 border-r border-gray-200 w-36">Tanggal</th>
+              <th className="p-3 text-center w-48">Aksi</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
             {loading ? (
               <tr>
-                <td colSpan={6} className="p-6 text-center text-gray-400">
+                <td colSpan={5} className="p-6 text-center text-gray-400">
                   Memuat data berita...
                 </td>
               </tr>
             ) : newsList.length === 0 ? (
               <tr>
-                <td colSpan={6} className="p-6 text-center text-gray-500">
+                <td colSpan={5} className="p-6 text-center text-gray-500">
                   Belum ada berita.
                 </td>
               </tr>
@@ -150,32 +117,8 @@ export default function AdminBeritaPage() {
                   <td className="p-3 border-r border-gray-200 text-gray-600">
                     {item.date}
                   </td>
-                  <td className="p-3 border-r border-gray-200 text-center">
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold inline-block ${
-                        item.published
-                          ? "bg-green-100 text-green-700 border border-green-300"
-                          : "bg-yellow-100 text-yellow-700 border border-yellow-300"
-                      }`}
-                    >
-                      {item.published ? "🟢 Publish" : "🟡 Draft"}
-                    </span>
-                  </td>
                   <td className="p-3 text-center">
                     <div className="flex justify-center items-center gap-2">
-                      <button
-                        type="button"
-                        disabled={actionLoading === item.id}
-                        onClick={() => handleTogglePublish(item)}
-                        className={`px-3 py-1.5 text-xs font-semibold text-white rounded transition ${
-                          item.published
-                            ? "bg-amber-500 hover:bg-amber-600"
-                            : "bg-emerald-600 hover:bg-emerald-700"
-                        } ${actionLoading === item.id ? "opacity-50" : ""}`}
-                      >
-                        {item.published ? "Unpublish" : "Publish"}
-                      </button>
-
                       <Link
                         href={`/admin/berita/edit/${item.id}`}
                         className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded transition"
