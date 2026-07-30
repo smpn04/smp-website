@@ -43,7 +43,7 @@ export default function AdminBeritaPage() {
     const newStatus = !item.published;
 
     try {
-      // 💡 DITEMPEL DI SINI (Memanggil Endpoint Khusus Baru):
+      // 💡 Mengarah ke endpoint khusus news-publish
       const res = await fetch(`/api/admin/news-publish/${item.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -162,7 +162,6 @@ export default function AdminBeritaPage() {
                   </td>
                   <td className="p-3 text-center">
                     <div className="flex justify-center items-center gap-2">
-                      {/* Tombol Toggle Status */}
                       <button
                         type="button"
                         disabled={actionLoading === item.id}
@@ -176,7 +175,6 @@ export default function AdminBeritaPage() {
                         {item.published ? "Unpublish" : "Publish"}
                       </button>
 
-                      {/* Tombol Edit */}
                       <Link
                         href={`/admin/berita/edit/${item.id}`}
                         className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded transition"
@@ -184,7 +182,6 @@ export default function AdminBeritaPage() {
                         Edit
                       </Link>
 
-                      {/* Tombol Hapus */}
                       <button
                         type="button"
                         disabled={actionLoading === item.id}
