@@ -115,7 +115,7 @@ export default function AdminBeritaPage() {
                     {item.title}
                   </td>
                   <td className="p-3 border-r border-gray-200 text-gray-600">
-                    {item.date}
+                    {item.date ? new Date(item.date).toLocaleDateString("id-ID") : "-"}
                   </td>
                   <td className="p-3 text-center">
                     <div className="flex justify-center items-center gap-2">

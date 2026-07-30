@@ -3,11 +3,12 @@ import Footer from "../../components/layout/Footer";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 
+// Force Next.js agar selalu mengambil data berita paling baru dari database
+export const revalidate = 0;
+
 export default async function BeritaPage() {
-  const news = await prisma.news.findMany({
-    where: {
-      published: true,
-    },
+  // Ambil semua berita tanpa menyaring published: true
+  const news = await (prisma as any).news.findMany({
     orderBy: {
       id: "desc",
     },
@@ -42,7 +43,7 @@ export default async function BeritaPage() {
           </div>
         ) : (
           <div className="space-y-6">
-            {news.map((item) => (
+            {news.map((item: any) => (
               <div
                 key={item.id}
                 className="rounded-xl border bg-white p-6 shadow-md"
@@ -52,16 +53,16 @@ export default async function BeritaPage() {
                 </h2>
 
                 <p className="mt-2 text-sm text-gray-500">
-                  {item.date}
+                  {item.date ? new Date(item.date).toLocaleDateString("id-ID") : "-"}
                 </p>
 
                 <p className="mt-4 text-gray-600">
-                  {item.excerpt}
+                  {item.excerpt || item.content || ""}
                 </p>
 
                 <Link
                   href={`/berita/${item.id}`}
-                  className="mt-4 inline-block font-semibold text-blue-700"
+                  className="mt-4 inline-block font-semibold text-blue-700 hover:underline"
                 >
                   Baca Selengkapnya →
                 </Link>
