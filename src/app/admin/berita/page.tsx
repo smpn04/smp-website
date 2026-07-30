@@ -43,8 +43,8 @@ export default function AdminBeritaPage() {
     const newStatus = !item.published;
 
     try {
-      // 👈 URL DIBERBAIKI: Mengarah langsung ke /api/admin/berita/[id] (tanpa /publish)
-      const res = await fetch(`/api/admin/berita/${item.id}`, {
+      // 💡 DITEMPEL DI SINI (Memanggil Endpoint Khusus Baru):
+      const res = await fetch(`/api/admin/news-publish/${item.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ published: newStatus }),
