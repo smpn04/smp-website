@@ -1,25 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-// Route handler untuk update status berita (PATCH)
+// Handler untuk Update Status Publish (PATCH)
 export async function PATCH(
   req: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: rawId } = await context.params;
-    const id = Number(rawId);
+    const resolvedParams = await params;
+    const id = Number(resolvedParams.id);
 
-    if (!id || isNaN(id)) {
+    if (isNaN(id)) {
       return NextResponse.json(
-        { success: false, message: "ID Berita tidak valid / harus berupa angka" },
+        { success: false, message: "ID Berita tidak valid" },
         { status: 400 }
       );
     }
 
     const body = await req.json();
 
-    // Pastikan memanggil prisma.news
     const updatedNews = await prisma.news.update({
       where: { id },
       data: {
@@ -34,22 +33,22 @@ export async function PATCH(
   } catch (error: any) {
     console.error("ERROR PATCH BERITA:", error);
     return NextResponse.json(
-      { success: false, message: error.message || "Gagal memperbarui status" },
+      { success: false, message: error.message || "Gagal memperbarui berita" },
       { status: 500 }
     );
   }
 }
 
-// Route handler untuk hapus berita (DELETE)
+// Handler untuk Hapus Berita (DELETE)
 export async function DELETE(
   req: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: rawId } = await context.params;
-    const id = Number(rawId);
+    const resolvedParams = await params;
+    const id = Number(resolvedParams.id);
 
-    if (!id || isNaN(id)) {
+    if (isNaN(id)) {
       return NextResponse.json(
         { success: false, message: "ID Berita tidak valid" },
         { status: 400 }
@@ -60,10 +59,14 @@ export async function DELETE(
       where: { id },
     });
 
-    return NextResponse.json({ success: true, message: "Berita berhasil dihapus" });
+    return NextResponse.json({
+      success: true,
+      message: "Berita berhasil dihapus",
+    });
   } catch (error: any) {
+    console.error("ERROR DELETE BERITA:", error);
     return NextResponse.json(
-      { success: false, message: error.message },
+      { success: false, message: error.message || "Gagal menghapus berita" },
       { status: 500 }
     );
   }
