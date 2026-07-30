@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+// PAKSA VERCEL & NEXT.JS UNTUK MATIKAN CACHE SAMA SEKALI
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 // GET: Ambil semua daftar berita
 export async function GET() {
@@ -12,7 +14,17 @@ export async function GET() {
       },
     });
 
-    return NextResponse.json({ success: true, data: newsList });
+    // KUNCI UTAMA: Tambahkan Header "Cache-Control: no-store" agar browser HP TIDAK MENYIMPAN CACHE
+    return NextResponse.json(
+      { success: true, data: newsList },
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+          "Pragma": "no-cache",
+          "Expires": "0",
+        },
+      }
+    );
   } catch (error: any) {
     console.error("ERROR GET BERITA:", error);
     return NextResponse.json(
