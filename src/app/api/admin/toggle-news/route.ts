@@ -3,52 +3,29 @@ import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(req: NextRequest) {
   try {
-    const { id: rawId } = await params;
-    const id = Number(rawId);
+    const body = await req.json();
+    const { id, published } = body;
 
-    if (isNaN(id) || !id) {
+    if (!id) {
       return NextResponse.json(
-        { success: false, message: "ID Berita tidak valid" },
+        { success: false, message: "ID Berita wajib diisi!" },
         { status: 400 }
       );
     }
 
-    // Parse body untuk status published baru
-    const body = await req.json();
-
-    // 1. Cek apakah record berita ada
-    const existingNews = await prisma.news.findUnique({
-      where: { id },
-    });
-
-    if (!existingNews) {
-      return NextResponse.json(
-        { success: false, message: `Berita dengan ID ${id} tidak ditemukan di database!` },
-        { status: 404 }
-      );
-    }
-
-    // 2. Lakukan update status published khusus tabel News
+    // @ts-ignore
     const updatedNews = await prisma.news.update({
-      where: { id },
-      data: {
-        published: Boolean(body.published),
-      },
+      where: { id: Number(id) },
+      data: { published: Boolean(published) },
     });
 
-    return NextResponse.json({
-      success: true,
-      data: updatedNews,
-    });
+    return NextResponse.json({ success: true, data: updatedNews });
   } catch (error: any) {
-    console.error("ERROR TOGGLE PUBLISH BERITA:", error);
+    console.error("ERROR TOGGLE NEWS:", error);
     return NextResponse.json(
-      { success: false, message: error.message || "Gagal mengubah status berita" },
+      { success: false, message: error?.message || "Gagal mengubah status berita" },
       { status: 500 }
     );
   }
