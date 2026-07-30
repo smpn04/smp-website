@@ -17,9 +17,12 @@ export default function TambahBeritaPage() {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
 
-  // Menangani perubahan input file (Bisa pilih lebih dari 1 file)
+  // Menangani perubahan input file
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
+      // Bersihkan URL preview lama dari memori browser untuk mencegah memory leak
+      previewUrls.forEach((url) => URL.revokeObjectURL(url));
+
       const filesArray = Array.from(e.target.files);
       setSelectedFiles(filesArray);
 
@@ -27,6 +30,13 @@ export default function TambahBeritaPage() {
       const urls = filesArray.map((file) => URL.createObjectURL(file));
       setPreviewUrls(urls);
     }
+  };
+
+  // Fungsi untuk menghapus foto tertentu dari daftar pilihan sebelum di-submit
+  const handleRemoveImage = (indexToRemove: number) => {
+    URL.revokeObjectURL(previewUrls[indexToRemove]);
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== indexToRemove));
+    setPreviewUrls((prev) => prev.filter((_, i) => i !== indexToRemove));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -58,7 +68,7 @@ export default function TambahBeritaPage() {
           if (!uploadRes.ok || !uploadResult.success) {
             alert(
               `[GAGAL UPLOAD FOTO KE-${i + 1}]\nPesan: ${
-                uploadResult.message || "Gagal upload ke Vercel Blob"
+                uploadResult.message || "Gagal upload ke storage"
               }`
             );
             setLoading(false);
@@ -81,7 +91,7 @@ export default function TambahBeritaPage() {
           excerpt,
           content,
           images: uploadedImageUrls, // Mengirimkan Array URL Foto
-          published: true, // Otomatis terbit agar muncul di /berita
+          published: true,
         }),
       });
 
@@ -155,15 +165,15 @@ export default function TambahBeritaPage() {
             </label>
             <input
               type="file"
-              accept="image/*"
-              multiple // 🟢 Memungkinkan pilihan beberapa foto sekaligus
+              // Spesifikasikan MIME type secara jelas agar dialog Windows mendukung multi-select
+              accept="image/png, image/jpeg, image/jpg, image/webp, image/gif"
+              multiple
               onChange={handleFileChange}
-              className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
             />
             <p className="text-[11px] text-gray-500 mt-1">
-              Tekan & tahan tombol <code className="font-bold">Ctrl</code> atau{" "}
-              <code className="font-bold">Shift</code> saat memilih foto untuk
-              memilih lebih dari 1 foto.
+              Tahan tombol <code className="font-bold">Ctrl</code> atau{" "}
+              <code className="font-bold">Shift</code> saat memilih foto, atau blok beberapa foto sekaligus.
             </p>
           </div>
         </div>
@@ -176,7 +186,7 @@ export default function TambahBeritaPage() {
             </p>
             <div className="flex flex-wrap gap-3">
               {previewUrls.map((url, index) => (
-                <div key={index} className="relative">
+                <div key={index} className="relative group">
                   <img
                     src={url}
                     alt={`Preview ${index + 1}`}
@@ -185,6 +195,15 @@ export default function TambahBeritaPage() {
                   <span className="absolute top-1 left-1 bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
                     #{index + 1}
                   </span>
+                  {/* Tombol Hapus Foto Batal Pilih */}
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveImage(index)}
+                    className="absolute top-1 right-1 bg-red-600 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center opacity-90 hover:opacity-100 shadow"
+                    title="Hapus foto ini"
+                  >
+                    ✕
+                  </button>
                 </div>
               ))}
             </div>
