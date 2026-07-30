@@ -1,5 +1,8 @@
 const handleTogglePublish = async (item: NewsItem) => {
-    if (!item?.id) return;
+    if (!item?.id) {
+      alert("Error: ID Berita tidak ditemukan di item!");
+      return;
+    }
 
     setActionLoading(item.id);
     const newStatus = !item.published;
@@ -18,11 +21,13 @@ const handleTogglePublish = async (item: NewsItem) => {
           prev.map((n) => (n.id === item.id ? { ...n, published: newStatus } : n))
         );
       } else {
-        alert(`Gagal: ${result.message || "Terjadi kesalahan server"}`);
+        // TAMPILKAN ERROR LENGKAP DARI BACKEND
+        console.error("Detail Error Server:", result);
+        alert(`GAGAL SERVER [${res.status}]:\n${result.message || JSON.stringify(result)}`);
       }
-    } catch (error) {
-      console.error(error);
-      alert("Terjadi kesalahan jaringan!");
+    } catch (error: any) {
+      console.error("Error Network:", error);
+      alert(`GAGAL JARINGAN / JS:\n${error?.message || error}`);
     } finally {
       setActionLoading(null);
     }
