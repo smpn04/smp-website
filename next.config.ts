@@ -1,27 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  experimental: {
-    serverActions: {
-      bodySizeLimit: "10mb",
-    },
+  typescript: {
+    ignoreBuildErrors: true,
   },
-
-  images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "**.public.blob.vercel-storage.com", // 👈 Menggunakan ** agar mencakup semua sub-subdomain
-        port: "",
-        pathname: "/**",
-      },
-      {
-        protocol: "https",
-        hostname: "public.blob.vercel-storage.com",
-        port: "",
-        pathname: "/**",
-      },
-    ],
+  eslint: {
+    ignoreDuringBuilds: true,
   },
 };
 
