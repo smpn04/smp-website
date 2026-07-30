@@ -16,7 +16,7 @@ export default function AdminBeritaPage() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
 
-  // Load data berita
+  // Fetch daftar berita
   const fetchNews = async () => {
     try {
       const res = await fetch("/api/admin/berita");
@@ -39,27 +39,33 @@ export default function AdminBeritaPage() {
 
   // Toggle status Publish / Unpublish
   const handleTogglePublish = async (item: NewsItem) => {
+    if (!item?.id) {
+      alert("ID Berita tidak valid!");
+      return;
+    }
+
     setActionLoading(item.id);
     const newStatus = !item.published;
 
     try {
-      // 💡 Mengarah ke endpoint khusus news-publish
-      const res = await fetch(`/api/admin/news-publish/${item.id}`, {
+      const res = await fetch(`/api/admin/toggle-news/${item.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ published: newStatus }),
       });
 
-      if (res.ok) {
+      const result = await res.json();
+
+      if (res.ok && result.success) {
+        // Update state lokal
         setNewsList((prev) =>
           prev.map((n) => (n.id === item.id ? { ...n, published: newStatus } : n))
         );
       } else {
-        const errData = await res.json().catch(() => ({}));
-        alert(`Gagal mengubah status: ${errData.message || "Terjadi kesalahan server"}`);
+        alert(`Gagal: ${result.message || "Terjadi kesalahan server"}`);
       }
     } catch (error) {
-      console.error(error);
+      console.error("Error toggle status:", error);
       alert("Terjadi kesalahan jaringan!");
     } finally {
       setActionLoading(null);
@@ -82,7 +88,7 @@ export default function AdminBeritaPage() {
         alert("Gagal menghapus berita!");
       }
     } catch (error) {
-      console.error(error);
+      console.error("Error hapus berita:", error);
       alert("Terjadi kesalahan!");
     } finally {
       setActionLoading(null);
