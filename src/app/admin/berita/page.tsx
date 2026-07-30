@@ -7,7 +7,8 @@ interface NewsItem {
   id: number;
   title: string;
   date: string;
-  image?: string | null;
+  images?: string[]; // Menggunakan array string sesuai schema prisma baru
+  image?: string | null; // Kontak kompatibilitas jika ada data lama
 }
 
 export default function AdminBeritaPage() {
@@ -95,51 +96,69 @@ export default function AdminBeritaPage() {
                 </td>
               </tr>
             ) : (
-              newsList.map((item, index) => (
-                <tr key={item.id} className="hover:bg-gray-50 text-sm">
-                  <td className="p-3 border-r border-gray-200 text-center font-medium">
-                    {index + 1}
-                  </td>
-                  <td className="p-3 border-r border-gray-200 text-center">
-                    {item.image ? (
-                      <img
-                        src={item.image}
-                        alt={item.title}
-                        className="w-24 h-16 object-cover rounded mx-auto border"
-                      />
-                    ) : (
-                      <span className="text-xs text-gray-400">No Image</span>
-                    )}
-                  </td>
-                  <td className="p-3 border-r border-gray-200 font-medium text-gray-800">
-                    {item.title}
-                  </td>
-                  <td className="p-3 border-r border-gray-200 text-gray-600">
-                    {item.date ? new Date(item.date).toLocaleDateString("id-ID") : "-"}
-                  </td>
-                  <td className="p-3 text-center">
-                    <div className="flex justify-center items-center gap-2">
-                      <Link
-                        href={`/admin/berita/edit/${item.id}`}
-                        className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded transition"
-                      >
-                        Edit
-                      </Link>
+              newsList.map((item, index) => {
+                // Mengambil foto utama (sampul pertama dari array images atau dari image lama)
+                const coverImage =
+                  item.images && item.images.length > 0
+                    ? item.images[0]
+                    : item.image;
+                const totalImages = item.images?.length || (item.image ? 1 : 0);
 
-                      <button
-                        type="button"
-                        disabled={actionLoading === item.id}
-                        onClick={() => handleDelete(item.id)}
-                        className={`px-3 py-1.5 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 rounded transition ${
-                          actionLoading === item.id ? "opacity-50" : ""
-                        }`}
-                      >
-                        Hapus
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
+                return (
+                  <tr key={item.id} className="hover:bg-gray-50 text-sm">
+                    <td className="p-3 border-r border-gray-200 text-center font-medium">
+                      {index + 1}
+                    </td>
+                    <td className="p-3 border-r border-gray-200 text-center relative">
+                      {coverImage ? (
+                        <div className="relative inline-block">
+                          <img
+                            src={coverImage}
+                            alt={item.title}
+                            className="w-24 h-16 object-cover rounded mx-auto border"
+                          />
+                          {totalImages > 1 && (
+                            <span className="absolute -top-2 -right-2 bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                              +{totalImages - 1}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-gray-400">No Image</span>
+                      )}
+                    </td>
+                    <td className="p-3 border-r border-gray-200 font-medium text-gray-800">
+                      {item.title}
+                    </td>
+                    <td className="p-3 border-r border-gray-200 text-gray-600">
+                      {item.date
+                        ? new Date(item.date).toLocaleDateString("id-ID")
+                        : "-"}
+                    </td>
+                    <td className="p-3 text-center">
+                      <div className="flex justify-center items-center gap-2">
+                        <Link
+                          href={`/admin/berita/edit/${item.id}`}
+                          className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded transition"
+                        >
+                          Edit
+                        </Link>
+
+                        <button
+                          type="button"
+                          disabled={actionLoading === item.id}
+                          onClick={() => handleDelete(item.id)}
+                          className={`px-3 py-1.5 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 rounded transition ${
+                            actionLoading === item.id ? "opacity-50" : ""
+                          }`}
+                        >
+                          Hapus
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>

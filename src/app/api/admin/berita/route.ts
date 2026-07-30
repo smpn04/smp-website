@@ -22,7 +22,7 @@ export async function GET() {
   }
 }
 
-// POST: Tambah Berita Baru (OTOMATIS PUBLISHED = TRUE)
+// POST: Tambah Berita Baru (Dukungan Multiple Gambar)
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -34,12 +34,22 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Pastikan images dalam bentuk Array
+    let imageList: string[] = [];
+    if (Array.isArray(body.images)) {
+      imageList = body.images;
+    } else if (body.image) {
+      // Jika dari form lama hanya mengirim 1 string gambar
+      imageList = [body.image];
+    }
+
     const newNews = await (prisma as any).news.create({
       data: {
         title: body.title,
         content: body.content || "",
+        excerpt: body.excerpt || body.content?.slice(0, 150) || "",
         date: body.date || new Date().toISOString().split("T")[0],
-        image: body.image || null,
+        images: imageList, // Mengirimkan Array of String URL Foto
         published: true, // AUTO PUBLISH SECARA OTOMATIS!
       },
     });

@@ -13,14 +13,19 @@ export default function TambahBeritaPage() {
   const [excerpt, setExcerpt] = useState("");
   const [content, setContent] = useState("");
 
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string>("");
+  // State untuk menangani multiple files dan preview URL-nya
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
 
+  // Menangani perubahan input file (Bisa pilih lebih dari 1 file)
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      setPreviewUrl(URL.createObjectURL(file));
+    if (e.target.files && e.target.files.length > 0) {
+      const filesArray = Array.from(e.target.files);
+      setSelectedFiles(filesArray);
+
+      // Buat URL preview untuk seluruh foto yang dipilih
+      const urls = filesArray.map((file) => URL.createObjectURL(file));
+      setPreviewUrls(urls);
     }
   };
 
@@ -35,32 +40,36 @@ export default function TambahBeritaPage() {
     setLoading(true);
 
     try {
-      let finalImageUrl = "";
+      const uploadedImageUrls: string[] = [];
 
-      // TAHAP 1: UPLOAD GAMBAR
-      if (selectedFile) {
-        const formData = new FormData();
-        formData.append("file", selectedFile);
+      // TAHAP 1: UPLOAD SEMUA GAMBAR SECARA BERTAHAP
+      if (selectedFiles.length > 0) {
+        for (let i = 0; i < selectedFiles.length; i++) {
+          const formData = new FormData();
+          formData.append("file", selectedFiles[i]);
 
-        const uploadRes = await fetch("/api/upload", {
-          method: "POST",
-          body: formData,
-        });
+          const uploadRes = await fetch("/api/upload", {
+            method: "POST",
+            body: formData,
+          });
 
-        const uploadResult = await uploadRes.json();
+          const uploadResult = await uploadRes.json();
 
-        // 🔍 DEBUG ALERT 1
-        if (!uploadRes.ok || !uploadResult.success) {
-          alert(`[GAGAL DI TAHAP 1 - UPLOAD API]\nPesan: ${uploadResult.message || "Gagal upload ke Vercel Blob"}`);
-          setLoading(false);
-          return;
+          if (!uploadRes.ok || !uploadResult.success) {
+            alert(
+              `[GAGAL UPLOAD FOTO KE-${i + 1}]\nPesan: ${
+                uploadResult.message || "Gagal upload ke Vercel Blob"
+              }`
+            );
+            setLoading(false);
+            return;
+          }
+
+          uploadedImageUrls.push(uploadResult.url);
         }
-
-        finalImageUrl = uploadResult.url;
-        alert(`[TAHAP 1 BERHASIL]\nURL Gambar: ${finalImageUrl}`);
       }
 
-      // TAHAP 2: SIMPAN KE DATABASE
+      // TAHAP 2: SIMPAN ARRAY GAMBAR KE DATABASE
       const res = await fetch("/api/admin/berita", {
         method: "POST",
         headers: {
@@ -71,20 +80,23 @@ export default function TambahBeritaPage() {
           date,
           excerpt,
           content,
-          image: finalImageUrl,
-          published: false,
+          images: uploadedImageUrls, // Mengirimkan Array URL Foto
+          published: true, // Otomatis terbit agar muncul di /berita
         }),
       });
 
       const result = await res.json();
 
-      // 🔍 DEBUG ALERT 2
       if (res.ok && result.success) {
-        alert("Berita Berhasil Disimpan ke Database!");
+        alert("Berita Berhasil Disimpan beserta semua foto!");
         router.push("/admin/berita");
         router.refresh();
       } else {
-        alert(`[GAGAL DI TAHAP 2 - PRISMA DB]\nPesan: ${result.message || "Gagal menyimpan ke database"}`);
+        alert(
+          `[GAGAL SIMPAN DATABASE]\nPesan: ${
+            result.message || "Gagal menyimpan ke database"
+          }`
+        );
       }
     } catch (error: any) {
       alert(`[ERROR SYSTEM]: ${error.message}`);
@@ -105,7 +117,10 @@ export default function TambahBeritaPage() {
         </Link>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-xl border shadow-sm">
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-6 bg-white p-6 rounded-xl border shadow-sm"
+      >
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-1">
             Judul Berita *
@@ -136,25 +151,43 @@ export default function TambahBeritaPage() {
 
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">
-              Foto Berita
+              Foto Berita (Bisa Pilih Banyak)
             </label>
             <input
               type="file"
               accept="image/*"
+              multiple // 🟢 Memungkinkan pilihan beberapa foto sekaligus
               onChange={handleFileChange}
               className="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />
+            <p className="text-[11px] text-gray-500 mt-1">
+              Tekan & tahan tombol <code className="font-bold">Ctrl</code> atau{" "}
+              <code className="font-bold">Shift</code> saat memilih foto untuk
+              memilih lebih dari 1 foto.
+            </p>
           </div>
         </div>
 
-        {previewUrl && (
+        {/* PREVIEW BEBERAPA FOTO TERPILIH */}
+        {previewUrls.length > 0 && (
           <div>
-            <p className="text-xs text-gray-500 mb-1">Preview Foto Terpilih:</p>
-            <img
-              src={previewUrl}
-              alt="Preview"
-              className="h-36 w-auto rounded border object-cover shadow-sm"
-            />
+            <p className="text-xs font-medium text-gray-600 mb-2">
+              Preview Foto Terpilih ({previewUrls.length} foto):
+            </p>
+            <div className="flex flex-wrap gap-3">
+              {previewUrls.map((url, index) => (
+                <div key={index} className="relative">
+                  <img
+                    src={url}
+                    alt={`Preview ${index + 1}`}
+                    className="h-24 w-24 rounded border object-cover shadow-sm"
+                  />
+                  <span className="absolute top-1 left-1 bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
+                    #{index + 1}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
@@ -189,7 +222,9 @@ export default function TambahBeritaPage() {
           disabled={loading}
           className="rounded-lg bg-blue-900 px-6 py-3 text-sm font-bold text-white hover:bg-blue-800 disabled:opacity-50 transition"
         >
-          {loading ? "Proses..." : "Simpan Berita"}
+          {loading
+            ? `Mengunggah (${selectedFiles.length} foto)...`
+            : "Simpan Berita"}
         </button>
       </form>
     </div>

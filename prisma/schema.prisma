@@ -17,15 +17,15 @@ model Admin {
   createdAt DateTime @default(now())
 }
 
-// 4. MODEL NEWS
+// 4. MODEL NEWS (Ditingkatkan untuk mendukung multiple foto)
 model News {
   id        Int      @id @default(autoincrement())
   title     String
   date      String
-  image     String?  // Opsional untuk URL Vercel Blob
+  images    String[] // 🟢 DIUBAH: Menggunakan array string untuk menampung banyak foto
   excerpt   String
   content   String   @db.Text
-  published Boolean  @default(false)
+  published Boolean  @default(true)
   createdAt DateTime @default(now())
 }
 
