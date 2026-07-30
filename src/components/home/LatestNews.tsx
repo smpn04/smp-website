@@ -9,13 +9,19 @@ export default function LatestNews() {
   useEffect(() => {
     async function fetchNewsFromDatabase() {
       try {
-        const res = await fetch("/api/admin/berita");
+        // PERBAIKAN UTAMA: Tambahkan { cache: "no-store" } agar HP selalu ambil data terbaru
+        const res = await fetch("/api/admin/berita", {
+          cache: "no-store",
+          headers: {
+            "Pragma": "no-cache",
+            "Cache-Control": "no-cache"
+          }
+        });
+
         if (res.ok) {
           const result = await res.json();
-          // Menangani jika response berupa { success: true, data: [...] } atau array langsung
           const data = result.data || result;
           if (Array.isArray(data)) {
-            // Hanya ambil berita yang statusnya sudah PUBLISHED
             const publishedOnly = data.filter((item) => item.published === true);
             setNewsList(publishedOnly);
           }
@@ -30,7 +36,6 @@ export default function LatestNews() {
     fetchNewsFromDatabase();
   }, []);
 
-  // Data Fallback jika database belum ada berita yang di-publish
   const defaultBerita = [
     {
       id: 1,
@@ -48,7 +53,6 @@ export default function LatestNews() {
     },
   ];
 
-  // Gunakan data dari Prisma jika ada, jika belum ada tampilkan default
   const displayData = newsList.length > 0 ? newsList : defaultBerita;
 
   return (
@@ -68,11 +72,16 @@ export default function LatestNews() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {displayData.slice(0, 3).map((item, index) => {
-              const imgSrc =
+              // PERBAIKAN FOTO: Dukung format array images[] juga
+              let imgSrc =
                 item.image ||
                 item.foto ||
                 item.gambar ||
                 item.imageUrl;
+
+              if (!imgSrc && Array.isArray(item.images) && item.images.length > 0) {
+                imgSrc = item.images[0];
+              }
 
               return (
                 <div
@@ -81,7 +90,7 @@ export default function LatestNews() {
                 >
                   <div>
                     <div className="h-52 w-full bg-slate-200 overflow-hidden relative">
-                      {imgSrc && imgSrc.trim() !== "" ? (
+                      {imgSrc && typeof imgSrc === "string" && imgSrc.trim() !== "" ? (
                         <img
                           src={imgSrc}
                           alt={item.title || item.judul}
