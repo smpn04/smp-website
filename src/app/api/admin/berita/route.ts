@@ -1,20 +1,19 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-// PAKSA VERCEL & NEXT.JS UNTUK MATIKAN CACHE SAMA SEKALI
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 // GET: Ambil semua daftar berita
 export async function GET() {
   try {
-    const newsList = await (prisma as any).news.findMany({
+    // @ts-ignore
+    const newsList = await prisma.news.findMany({
       orderBy: {
-        createdAt: "desc", // Mengurutkan dari berita terbaru
+        createdAt: "desc",
       },
     });
 
-    // KUNCI UTAMA: Tambahkan Header "Cache-Control: no-store" agar browser HP TIDAK MENYIMPAN CACHE
     return NextResponse.json(
       { success: true, data: newsList },
       {
@@ -25,17 +24,18 @@ export async function GET() {
         },
       }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errMessage = error instanceof Error ? error.message : "Gagal mengambil data berita";
     console.error("ERROR GET BERITA:", error);
     return NextResponse.json(
-      { success: false, message: error?.message || "Gagal mengambil data berita" },
+      { success: false, message: errMessage },
       { status: 500 }
     );
   }
 }
 
-// POST: Tambah Berita Baru (Dukungan Multiple Gambar)
-export async function POST(req: NextRequest) {
+// POST: Tambah Berita Baru
+export async function POST(req: Request) {
   try {
     const body = await req.json();
 
@@ -46,31 +46,31 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Pastikan images dalam bentuk Array
     let imageList: string[] = [];
     if (Array.isArray(body.images)) {
       imageList = body.images;
     } else if (body.image) {
-      // Jika dari form lama hanya mengirim 1 string gambar
       imageList = [body.image];
     }
 
-    const newNews = await (prisma as any).news.create({
+    // @ts-ignore
+    const newNews = await prisma.news.create({
       data: {
         title: body.title,
         content: body.content || "",
         excerpt: body.excerpt || body.content?.slice(0, 150) || "",
         date: body.date || new Date().toISOString().split("T")[0],
-        images: imageList, // Mengirimkan Array of String URL Foto
-        published: true, // AUTO PUBLISH SECARA OTOMATIS!
+        images: imageList,
+        published: true,
       },
     });
 
     return NextResponse.json({ success: true, data: newNews }, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errMessage = error instanceof Error ? error.message : "Gagal menambah berita";
     console.error("ERROR POST BERITA:", error);
     return NextResponse.json(
-      { success: false, message: error?.message || "Gagal menambah berita" },
+      { success: false, message: errMessage },
       { status: 500 }
     );
   }
