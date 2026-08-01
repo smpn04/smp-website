@@ -22,7 +22,7 @@ model News {
   id        Int      @id @default(autoincrement())
   title     String
   date      String
-  images    String[] // 🟢 DIUBAH: Menggunakan array string untuk menampung banyak foto
+  images    String[] // 🟢 Menggunakan array string untuk menampung banyak foto
   excerpt   String
   content   String   @db.Text
   published Boolean  @default(true)
@@ -34,7 +34,7 @@ model Teacher {
   id        Int      @id @default(autoincrement())
   name      String
   position  String
-  photo     String?  // Opsional untuk URL Vercel Blob
+  photo     String?  // Opsional untuk URL foto
   createdAt DateTime @default(now())
 }
 
@@ -42,7 +42,20 @@ model Teacher {
 model Gallery {
   id        Int      @id @default(autoincrement())
   title     String
-  image     String?  // Opsional untuk URL Vercel Blob
+  image     String?  // Opsional untuk URL foto
   published Boolean  @default(false)
   createdAt DateTime @default(now())
+}
+
+// 7. MODEL PROFIL SEKOLAH (BARU: Untuk menyimpan data Sambutan & Statistik)
+model ProfilSekolah {
+  id             Int      @id @default(autoincrement())
+  kepalaSekolah  String
+  sambutan       String   @db.Text
+  fotoKepsek     String?
+  jumlahSiswa    String
+  jumlahGuru     String
+  jumlahKelas    String
+  jumlahPrestasi String
+  updatedAt      DateTime @updatedAt
 }
