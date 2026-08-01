@@ -98,10 +98,18 @@ export default function AdminBeritaPage() {
             ) : (
               newsList.map((item, index) => {
                 // Mengambil foto utama (sampul pertama dari array images atau dari image lama)
-                const coverImage =
+                const rawImage =
                   item.images && item.images.length > 0
                     ? item.images[0]
                     : item.image;
+
+                // Memastikan path berawalan '/' atau 'http' agar Next.js dapat membacanya dari folder public
+                const coverImage = rawImage
+                  ? rawImage.startsWith("http") || rawImage.startsWith("/")
+                    ? rawImage
+                    : `/${rawImage}`
+                  : null;
+
                 const totalImages = item.images?.length || (item.image ? 1 : 0);
 
                 return (
